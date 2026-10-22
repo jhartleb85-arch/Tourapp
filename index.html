@@ -99,6 +99,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
+const APPV=54;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -528,7 +529,7 @@ function renderMehr(){const it=(ic,t,s,fn)=>`<button class="mitem" onclick="${fn
  ${C.length?"":'<div class="card" style="background:var(--softw)"><b>Willkommen!</b><br>Auf diesem Gerät sind noch keine Daten. Tippe unten auf „📂 Datei einspielen“ und wähle deine Sicherungsdatei.</div>'}<div class="card"><h2>💾 Sicherung &amp; Updates</h2><p class="hint">Deine Daten liegen nur auf diesem Handy. Sichere sie regelmäßig – z. B. jeden Freitag beim Wochenabschluss. Updates von Claude kommen als Datei und werden hier eingespielt.</p>
  <button class="btn" onclick="backupAll()">💾 Alles sichern</button> <label class="btn g" style="display:inline-block">📂 Datei einspielen<input type="file" accept=".json,application/json" hidden onchange="importFile(event)"></label>
  <div class="hint" style="margin-top:6px">Letzte Sicherung: ${S.get("ta2_lastbk","")?dmy(S.get("ta2_lastbk","")):"noch keine"}</div></div>`}
-function renderAll(){const vv=document.querySelector("#ver");if(vv)vv.textContent="Version "+Math.max(UPD.v||0,S.get("ta2_updv",0))+" · "+act().length+" aktive Klienten";const A=act().sort((a,b)=>a.n.localeCompare(b.n)),cur=$("#ziel").value;$("#ziel").innerHTML=`<optgroup label="Feste Orte">${PL.map(p=>`<option value="${p.id}">🏢 ${h(p.n)}</option>`).join("")}</optgroup><optgroup label="Klienten">`+A.filter(hasP).map(c=>`<option value="${c.id}">${h(c.n)} – Tour ${c.t}</option>`).join("")+"</optgroup>";if(cur)$("#ziel").value=cur;
+function renderAll(){const vv=document.querySelector("#ver");if(vv)vv.textContent="App "+APPV+" · Daten "+Math.max(UPD.v||0,S.get("ta2_updv",0))+" · "+act().length+" aktive Klienten";const A=act().sort((a,b)=>a.n.localeCompare(b.n)),cur=$("#ziel").value;$("#ziel").innerHTML=`<optgroup label="Feste Orte">${PL.map(p=>`<option value="${p.id}">🏢 ${h(p.n)}</option>`).join("")}</optgroup><optgroup label="Klienten">`+A.filter(hasP).map(c=>`<option value="${c.id}">${h(c.n)} – Tour ${c.t}</option>`).join("")+"</optgroup>";if(cur)$("#ziel").value=cur;
  $("#places").innerHTML=PL.map(p=>`<div class="c"><div><div class="n">${h(p.n)}</div><div class="m">${h(p.a)}</div></div><button class="btn g" onclick="delPlace('${p.id}')">entfernen</button></div>`).join("");
  SCHC=null;renderHeute();renderWoche();renderKlist();renderKlient();renderMehr();renderGo();renderTour();renderDue();renderData();renderArchiv();renderProt()}
 async function geoAll(){const b=$("#geo");b.disabled=true;const done=new Map();let ok=0,fail=[];const A=act().filter(c=>c.t>0);
