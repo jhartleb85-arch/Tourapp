@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tour-Assistent</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2B4A75"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{--bg:#F5F7F6;--card:#fff;--ink:#16202B;--mut:#56626E;--pri:#2B4A75;--acc:#0E7C66;--ok:#0E7C66;--warn:#B45309;--amber:#F2B33D;--line:#DCE2E0;--hd:#fff;--soft:#E3F1EC;--softw:#FFF1D6;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#16202C;--card:#223042;--ink:#EEF2F5;--mut:#AEB9C4;--pri:#2B4A75;--acc:#3FC29E;--ok:#3FC29E;--warn:#F0A050;--line:#2A3644;--hd:#fff;--soft:#163A33;--softw:#3A2A10;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;font:16px/1.45 'Atkinson Hyperlegible',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--pri);color:var(--hd);padding:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px))}header h1{margin:0;font-size:19px}header p{margin:2px 0 0;color:#D6DFEC;font-size:13px}
+main{max-width:780px;margin:0 auto;padding:14px 16px 100px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--card);border-top:1px solid var(--line);padding:4px max(4px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px))}
+.tabs button{min-height:54px;border:0;background:transparent;color:var(--mut);font:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}.tabs button svg{width:23px;height:23px}
+.tabs button.on{color:var(--acc);font-weight:700}
+.card{background:var(--card);border:0;border-radius:16px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(22,35,58,.06)}
+select,input,textarea{width:100%;padding:11px;border:1px solid #C8D1CE;border-radius:12px;font-size:16px;background:var(--card);color:var(--ink);font:inherit}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1;min-width:120px}
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:9px 14px;border-radius:12px;background:var(--acc);color:#fff;text-decoration:none;font-size:15px;font-weight:700;border:0;cursor:pointer;margin:3px 4px 0 0}
+.btn.g{background:transparent;color:var(--acc);border:1px solid var(--acc)}.btn.w{background:var(--warn)}
+.c{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.c:first-child{border-top:0}
+.n{font-weight:700}.m{color:var(--mut);font-size:14px}.km{font-weight:700;white-space:nowrap}
+.tag{display:inline-block;font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px;margin:2px 0 2px 4px;border:0}
+.due{background:var(--softw);color:var(--warn)}.okk{background:var(--soft);color:var(--ok)}.tel{background:var(--line);color:var(--mut)}
+h2{font-family:'Barlow Condensed',system-ui,sans-serif;font-weight:700;font-size:16px;letter-spacing:.06em;text-transform:uppercase;margin:2px 0 10px;color:var(--mut)}.hint{font-size:13px;color:var(--mut)}
+.stop{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.stop:first-of-type{border-top:0}.num{flex:0 0 26px;height:26px;border-radius:50%;background:var(--acc);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+.sug{display:block;width:100%;text-align:left;padding:9px 10px;border:0;border-bottom:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}.sug:hover{background:var(--line)}
+.chip{display:inline-block;padding:7px 11px;margin:2px 3px 2px 0;border-radius:20px;border:1px solid var(--acc);background:transparent;color:var(--acc);font:inherit;font-size:13px;font-weight:700;cursor:pointer}.chip.on{background:var(--acc);color:#fff}
+.pm{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:2px solid var(--warn);background:transparent;color:var(--warn);font-size:20px;font-weight:700;line-height:1;cursor:pointer;padding:0}.row>.pm{flex:0 0 34px;min-width:0}.pm.plus{border-color:var(--ok);color:var(--ok)}
+.big8{background:var(--warn);color:#fff;font-weight:800;font-size:16px;line-height:1.3;padding:10px 12px;border-radius:10px;margin:8px 0;border:3px solid var(--ink)}
+.ov{position:fixed;inset:0;background:rgba(10,15,30,.5);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}.ov[hidden]{display:none}.dlgc{max-width:560px;width:100%;margin-top:12px}textarea{resize:vertical}.run{background:var(--warn);color:#fff}
+.kh{background:var(--pri);color:#fff;border-radius:18px;padding:16px;margin-bottom:12px}.kh h1{margin:4px 0 2px;font-size:26px;line-height:1.15}.kh .sub{color:#DCE4F0;font-size:15px}
+.kgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}.kbtn{min-height:74px;border-radius:16px;border:1px solid #C8D1CE;background:var(--card);color:var(--ink);font:inherit;font-size:13px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;text-decoration:none}.kbtn.p{background:var(--acc);border-color:var(--acc);color:#fff}.kbtn.run{background:var(--warn);border-color:var(--warn);color:#fff}
+.krow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid var(--line);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;text-align:left}.krow:first-child{border-top:0}
+.mitem{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:10px 4px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:17px;text-align:left;cursor:pointer}.mitem:first-child{border-top:0}
+.back{display:inline-flex;align-items:center;gap:4px;min-height:44px;border:0;background:none;color:#C9D3E3;font:inherit;font-size:15px;cursor:pointer;padding:0}
+.msg{padding:10px;border-radius:10px;background:var(--line);margin-bottom:10px;font-size:14px}
+#pr{display:none}
+@media print{body.prm>*:not(#pr){display:none!important}body.prm #pr{display:block!important;color:#000;background:#fff;font:11pt/1.4 Arial,sans-serif}
+ #pr h1{font-size:15pt;margin:0 0 4pt}#pr h2{font-size:12pt;margin:10pt 0 4pt;color:#000}#pr table{width:100%;border-collapse:collapse;margin-top:6pt}#pr td,#pr th{border:1px solid #888;padding:3pt 5pt;vertical-align:top;text-align:left;font-size:10pt}#pr th{background:#e6e9f0}#pr .pb{break-before:page}#pr .sm{font-size:9pt;color:#444}
+ body:not(.prm) header,body:not(.prm) .tabs,body:not(.prm) .btn,body:not(.prm) section:not(#tour){display:none!important}body:not(.prm) #tour{display:block!important}.card{break-inside:avoid}body{background:#fff;color:#000}}
+</style></head><body>
+<header><h1>Tour-Assistent</h1><p><span id="ver"></span></p></header>
+<main>
+<nav class="tabs" aria-label="Hauptnavigation"><button data-t="heute" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Heute</button><button data-t="woche"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</button><button data-t="klienten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0114 0M17 11a3 3 0 100-6M22 21a6 6 0 00-4-5.6"/></svg>Klienten</button><button data-t="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14l-1.5-6a2 2 0 00-2-1.5h-7a2 2 0 00-2 1.5z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>Unterwegs</button><button data-t="mehr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Mehr</button></nav><div hidden id="alias"><button data-t="due"></button><button data-t="data"></button><button data-t="prot"></button><button data-t="tour"></button><button data-t="archiv"></button></div>
+<div id="msg"></div>
+<section id="heute"></section>
+<section id="woche" hidden></section>
+<section id="go" hidden><div class="card"><label style="margin-top:0">Ich fahre zu … (Klient, fester Ort oder beliebige Adresse)</label>
+ <input id="zq" type="search" placeholder="z. B. Name, Einrichtung, Café …" autocomplete="off"><div id="zs"></div><select id="ziel" hidden></select>
+ <div class="row" style="margin-top:10px;gap:6px"><span class="m" style="flex:0 0 auto;min-width:0">Umkreis:</span><span id="radc" style="flex:1 1 auto;min-width:0"></span><input id="rad" type="hidden" value="4">
+ <button class="btn g" id="gps" style="flex:0 0 auto;min-width:0">📍 Mein Standort</button></div></div><div id="out"></div></section>
+<section id="tour" hidden></section>
+<section id="klist" hidden></section>
+<section id="due" hidden></section>
+<section id="data" hidden>
+ <div class="card"><h2 id="fh">Neuen Klienten anlegen</h2>
+  <input type="hidden" id="f_id">
+  <label>Name</label><input id="f_n" placeholder="z. B. Müller Anna">
+  <label>Adresse (Straße Nr., PLZ Ort) – bei „ohne Tour“ optional</label><input id="f_a" placeholder="z. B. Musterstraße 5, 22761 Hamburg">
+  <label>Einrichtung (optional)</label><input id="f_einr" placeholder="z. B. Name des Heims – leer lassen bei Wohnung">
+  <div class="row"><div><label>Besuchsrhythmus</label><select id="f_r"><option value="H">immer Hausbesuch</option><option value="A">2× Besuch + 2× Anruf</option><option value="E">1× Besuch + 3× Anruf</option><option value="?">noch offen</option></select></div>
+  <div><label>Tour</label><select id="f_t"><option value="auto">automatisch zuordnen</option><option value="0">ohne Tour (mobiles Büro / Telefon)</option></select></div></div>
+  <div class="row"><div><label>Hausbank</label><input id="f_bank" placeholder="z. B. Haspa"></div><div><label>Notiz</label><input id="f_note"></div></div>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--ink);font-size:14px"><input type="checkbox" id="f_nc" style="width:auto"> Regelmäßiger Telefonkontakt – keine Anruf-Erinnerungen</label>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:6px;color:var(--ink);font-size:14px"><input type="checkbox" id="f_np" style="width:auto"> Telefonisch nicht erreichbar – nur Besuche</label>
+  <button class="btn" id="save">Speichern & Tour optimieren</button><button class="btn g" id="reset">Neu / leeren</button>
+  <div id="fstat" class="hint" style="margin-top:6px"></div></div>
+ <div class="card"><h2>Alle aktiven Klienten (<span id="cnt"></span>)</h2><input id="srch" placeholder="Suchen …"><div id="list"></div></div>
+ <div class="card"><h2>Tour-Kalender</h2><label>Erster Mittwoch von Tour 1 (Start des 12-Wochen-Zyklus)</label><input type="date" id="start"><div class="n" style="margin-top:10px">Reihenfolge der Touren im Zyklus</div><div class="hint">Zuerst die Touren, bei denen du am längsten nicht warst. Die Zahl zeigt die Dringlichkeit: 3 je unbekanntem Kontakt, 2 je über 6 Monate überfälligem, 1 je überfälligem, +2 bei dringender Wiedervorlage.</div><div id="ordl"></div><button class="btn g" onclick="sortOrd()">⚡ Nach Dringlichkeit sortieren</button>
+ <div class="n" style="margin-top:10px">Termine</div><div id="cal" class="hint" style="margin-top:6px"></div><button class="btn g" id="ics">📅 Touren als Kalenderdatei (.ics)</button></div>
+ <div class="card"><h2>Telefonische Sprechzeiten</h2><div class="row"><div><label for="sz1">Montag</label><input id="sz1" placeholder="z. B. 9–12"></div><div><label for="sz4">Donnerstag</label><input id="sz4" placeholder="z. B. 9–12"></div></div><button class="btn g" onclick="SZ={'1':$('#sz1').value.trim(),'4':$('#sz4').value.trim()};S.set('ta2_szman',1);save();renderAll();flash('Sprechzeiten gespeichert.')">Speichern</button></div>
+ <div class="card"><h2>Urlaub & gesperrte Wochen</h2><div class="hint">Hamburger Feiertage (inkl. 24. und 31.12.) werden automatisch übersprungen. Fällt ein Mittwoch in einen Urlaub, rutschen diese und alle folgenden Touren eine Woche weiter.</div>
+ <div class="row"><div><label for="b_von">von</label><input type="date" id="b_von"></div><div><label for="b_bis">bis</label><input type="date" id="b_bis"></div></div><label for="b_g">Grund</label><input id="b_g" placeholder="z. B. Urlaub, Fortbildung"><button class="btn g" onclick="addBlk()">+ Sperrzeit hinzufügen</button><div id="blkl"></div></div>
+ <div class="card"><h2>Feste Orte (mobiles Büro u. a.)</h2><div id="places"></div><label>Neuer Ort: Name</label><input id="p_n" placeholder="z. B. Amtsgericht Altona"><label>Adresse</label><input id="p_a"><button class="btn g" id="p_add">Ort hinzufügen</button></div>
+ <div class="card"><h2>Werkzeuge</h2>
+  <button class="btn g" id="geo">📍 Alle Adressen genau prüfen</button><button class="btn g" id="rebal">⚖️ Touren ausgleichen prüfen</button>
+  <button class="btn g" onclick="window.print()">🖨 Tourenplan drucken / PDF</button><br>
+  <button class="btn g" id="exp">💾 Sicherung herunterladen</button><label class="btn g" style="display:inline-block">📂 Sicherung laden<input type="file" id="imp" accept=".json" hidden></label>
+  <div id="geos" class="hint" style="margin-top:6px"></div></div>
+</section>
+<section id="prot" hidden></section>
+<section id="klient" hidden></section>
+<section id="mehr" hidden></section>
+<section id="archiv" hidden></section>
+<div id="pr"></div>
+<div id="dlg" class="ov" hidden><div id="dlgc" class="card dlgc"></div></div>
+</main>
+<script>
+const SEED=[], TNAMES=[{"g": "TOUR 1"}, {"g": "TOUR 2"}, {"g": "TOUR 3"}, {"g": "TOUR 4"}, {"g": "TOUR 5"}, {"g": "TOUR 6"}, {"g": "TOUR 7"}, {"g": "TOUR 8"}, {"g": "TOUR 9"}, {"g": "TOUR 10"}];
+const _H=(()=>{try{return JSON.parse(localStorage.getItem("ta2_home"))}catch(e){return null}})();
+const HOME=_H&&_H.ll?_H.ll:[53.55,10.0];
+const EX={W:{"A7 Schnelsen-Nord":[53.645,9.918],"A7 Eidelstedt":[53.612,9.912],"A7 Volkspark":[53.587,9.906],"A7 Bahrenfeld":[53.566,9.897],"A7 Othmarschen":[53.556,9.893]},
+ O:{"A1 Rahlstedt":[53.600,10.190],"A24 Jenfeld":[53.575,10.140],"A24 Horn":[53.556,10.075]},N:{"A23 Pinneberg-Süd":[53.640,9.820]}};
+const HOMEA=_H&&_H.a?_H.a:"";
+const WP={KOST:[53.565,10.177],KSUED:[53.505,10.060],MASCH:[53.410,9.990],ELB:[53.553,9.900],HORN:[53.556,10.075],A23:[53.640,9.820]};
+let RW="a7",MODE="tour";let PICK=new Set(),PB=null,GO=false,LASTZ=null;
+const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],"?":["Rhythmus offen",84]};
+const MAXH=5.5;
+const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
+const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
+function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
+ Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
+  ["bank","r","note","a","la","lo","geo","e","on","why","end","t","noCall","noPhone","n"].forEach(k=>{if(u[k]!==undefined)c[k]=u[k]});
+  if(u.replcal&&LOG[c.id])LOG[c.id]=LOG[c.id].filter(e=>e.src!="cal");(u.log||[]).forEach(e=>{const L=(LOG[c.id]=LOG[c.id]||[]);if(!L.some(x=>x.d==e.d&&x.typ==e.typ))L.push(e)});n++}));
+ if(UPD.ord&&(UPD.ordforce||!(S.get("ta2_ordman",0)))){ORD=UPD.ord;SCHC=null}if(UPD.cal)CAL=UPD.cal;if(UPD.sz&&(UPD.szforce||!S.get("ta2_szman",0))){SZ=UPD.sz}if(UPD.wkrm)WK=WK.filter(x=>!UPD.wkrm.includes(x.id));(UPD.wk||[]).forEach(w=>{const x=WK.find(x=>x.id==w.id);if(x)Object.assign(x,w);else WK.push(w)});(UPD.blk||[]).forEach(b=>{const x=BLK.find(x=>x.von==b.von);if(x)Object.assign(x,b);else BLK.push(b)});SCHC=null;if(UPD.start&&!START){START=UPD.start;const s=document.querySelector("#start");if(s)s.value=START}(UPD.add||[]).forEach(x=>{if(!C.some(c=>c.n==x.n)){C.push({...x,id:Math.max(0,...C.map(c=>c.id))+1});n++}});S.set("ta2_updv",UPD.v);save();setTimeout(()=>flash(`🔄 Neue Daten übernommen – deine eigenen Einträge bleiben erhalten.`),300)}let tnames=S.get("ta2_tnames",TNAMES.map(t=>t.g));let LOG=S.get("ta2_log",{});let START=S.get("ta2_start","");
+let PL=S.get("ta2_places",[{id:"p1",n:"Mobiles Büro: Café May Eimsbüttel",a:"Lappenbergsallee, 20257 Hamburg",la:53.574,lo:9.937},{id:"p2",n:"Mobiles Büro (künftig): Café May Horn",a:"Am Gojenboom 46, 22111 Hamburg",la:53.556,lo:10.087}]);
+let CAL=S.get("ta2_cal",{at:"",ev:[]}),SZ=S.get("ta2_sz",{"1":"","4":""}),WOFF=0,WK=S.get("ta2_wk",[]),ORD=S.get("ta2_ord",null);let RUN=S.get("ta2_run",{}),FB=S.get("ta2_fb",[]),BLK=S.get("ta2_blk",[]),SP=S.get("ta2_sp",[]);
+const save=()=>{S.set("ta2_cal",CAL);S.set("ta2_sz",SZ);S.set("ta2_ord",ORD);S.set("ta2_wk",WK);S.set("ta2_blk",BLK);S.set("ta2_sp",SP);S.set("ta2_run",RUN);S.set("ta2_fb",FB);S.set("ta2_clients",C);S.set("ta2_log",LOG);S.set("ta2_tnames",tnames);S.set("ta2_start",START);S.set("ta2_places",PL)};
+const $=s=>document.querySelector(s),enc=encodeURIComponent,h=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const act=()=>C.filter(c=>c.on);
+const dist=(a,b)=>{const R=6371,x=(b[0]-a[0])*Math.PI/180,y=(b[1]-a[1])*Math.PI/180,q=Math.sin(x/2)**2+Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(q))*1.3};
+const P=c=>[c.la,c.lo];const hasP=c=>c.la!=null&&c.la!==0;
+const isE=c=>c.e==="E";
+function flash(t){$("#msg").innerHTML=`<div class="msg">${t}</div>`;setTimeout(()=>{$("#msg").innerHTML=""},9000)}
+// ---------- Tour-Optimierung ----------
+function stopsOf(t){const m=new Map();act().filter(c=>c.t==t&&c.t>0&&hasP(c)).forEach(c=>{const k=c.a.toLowerCase().replace(/\s+/g," ");if(!m.has(k))m.set(k,{a:c.a,p:P(c),cl:[]});m.get(k).cl.push(c)});return [...m.values()]}
+function region(st){if(!st.length)return"W";const la=st.reduce((s,x)=>s+x.p[0],0)/st.length,lo=st.reduce((s,x)=>s+x.p[1],0)/st.length;return lo>10.0?"O":la>53.65?"N":"W"}
+function pathLen(o,a,b){let L=dist(a,o[0].p);for(let i=0;i<o.length-1;i++)L+=dist(o[i].p,o[i+1].p);return L+dist(o[o.length-1].p,b)}
+function perms(a){if(a.length<=1)return[a];const r=[];a.forEach((x,i)=>perms([...a.slice(0,i),...a.slice(i+1)]).forEach(p=>r.push([x,...p])));return r}
+function optimize(t){const st=stopsOf(t);if(!st.length)return{order:[],km:0,inE:"",outE:"",hrs:0,pers:0};
+ const reg=region(st),ex=Object.entries(region(st)=="N"?{...EX.N,...EX.W}:EX[reg]);let best=null;
+ const cand=st.length<=7?perms(st):(()=>{let o=[...st];let imp=true;while(imp){imp=false;for(let i=0;i<o.length-1;i++)for(let j=i+1;j<o.length;j++){const n=[...o.slice(0,i),...o.slice(i,j+1).reverse(),...o.slice(j+1)];if(pathLen(n,ex[0][1],ex[0][1])<pathLen(o,ex[0][1],ex[0][1])){o=n;imp=true}}}return[o,[...o].reverse()]})();
+ for(const o of cand)for(const [an,a] of ex)for(const [bn,b] of ex){const L=pathLen(o,a,b);if(!best||L<best.L)best={L,o,an,bn,a,b}}
+ const pers=st.reduce((s,x)=>s+x.cl.length,0),hrs=(pers*45+st.length*10)/60;
+ const far=reg=="O"?95:reg=="N"?170:140;
+ return{order:best.o,km:loopKm(best.o.map(s=>s.p)),inE:best.an,outE:best.bn,hrs,pers,reg}}
+// Straßen-km: Zuhause–Hamburg ca. 1,45 × Luftlinie (A24), innerhalb Hamburgs ca. 1,3 × Luftlinie
+function loopKm(P){if(!P.length)return 0;let L=dist(HOME,P[0])*1.12+dist(P[P.length-1],HOME)*1.12;for(let i=0;i<P.length-1;i++)L+=dist(P[i],P[i+1]);return Math.round(L)}
+function tourCount(){return Math.max(tnames.length,...act().map(c=>c.t||0))}
+function suggestTour(c,excl){let best=null;for(let t=1;t<=tourCount();t++){const st=stopsOf(t).filter(s=>!s.cl.includes(c));if(!st.length)continue;
+  const near=Math.min(...st.map(s=>dist(s.p,P(c))));const o=optimize(t);const add=(isE(c)?45:55)/60;const over=Math.max(0,o.hrs+add-MAXH);
+  const score=near+over*6;if(!best||score<best.score)best={t,score,near,hrs:o.hrs+add}}return best}
+// ---------- Geocoding ----------
+async function geocode(a){const G=await geoFull(normAdr(a.replace("–","-")));if(G)return[G.la,G.lo];
+ const plz=(a.match(/\b\d{5}\b/)||[])[0];if(plz){const same=C.find(x=>x.a.includes(plz)&&x.geo);if(same)return[same.la,same.lo];try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&country=de&postalcode=${plz}`);const j=await r.json();if(j[0])return[+j[0].lat,+j[0].lon]}catch(e){}}
+ return null}
+// ---------- Stammdaten ----------
+function fillForm(c){$("#fh").textContent=c?"Klient bearbeiten":"Neuen Klienten anlegen";$("#f_id").value=c?c.id:"";
+ const m=c?c.n.match(/^(.*) \((.*)\)$/):null;$("#f_n").value=c?(m?m[1]:c.n):"";$("#f_einr").value=m?m[2]:"";$("#f_a").value=c?c.a:"";
+ $("#f_r").value=c?c.r:"A";$("#f_t").value=c?String(c.t):"auto";$("#f_bank").value=c?c.bank||"":"";$("#f_note").value=c?c.note||"":"";$("#f_nc").checked=!!(c&&c.noCall);$("#f_np").checked=!!(c&&c.noPhone);$("#fstat").textContent="";
+ if(c)document.querySelector('[data-t="data"]').click(),$("#f_n").scrollIntoView({behavior:"smooth"})}
+async function saveForm(){const n=$("#f_n").value.trim(),a=$("#f_a").value.trim(),noT=$("#f_t").value==="0";if(!n||(!a&&!noT)){$("#fstat").textContent="Bitte Name und Adresse angeben.";return}
+ const id=+$("#f_id").value||0;let c=id?C.find(x=>x.id==id):null;const isNew=!c;const oldA=c?c.a:"";
+ if(!c){c={id:Math.max(0,...C.map(x=>x.id))+1,on:1,la:0,lo:0};C.push(c)}
+ const einr=$("#f_einr").value.trim();c.n=einr?`${n} (${einr})`:n;c.a=a||"mobiles Büro";c.r=$("#f_r").value;c.bank=$("#f_bank").value.trim();c.note=$("#f_note").value.trim();c.noCall=$("#f_nc").checked?1:0;c.noPhone=$("#f_np").checked?1:0;
+ c.e=einr?"E":(isNew?"W":c.e);
+ if(a&&(isNew||oldA!==a)){$("#fstat").textContent="Ermittle Lage der Adresse …";const g=await geocode(a);
+  if(g){c.la=g[0];c.lo=g[1];c.geo=1}else if(isNew&&!noT){C.pop();$("#fstat").textContent="Adresse nicht gefunden – bitte Schreibweise prüfen (Straße Nr., PLZ Ort). Internet nötig.";return}}
+ const oldT=c.t;let info="";const moved=!isNew&&oldA&&oldA!==c.a;const keepSel=$("#f_t").value===String(oldT);
+ if(hasP(c)&&($("#f_t").value==="auto"||(moved&&keepSel&&oldT>0))){const s=suggestTour(c);if(s){c.t=s.t;info=moved?(s.t==oldT?`Umzug: bleibt in Tour ${s.t} (${tnames[s.t-1]}) – passt weiterhin am besten.`:`Umzug: automatisch von Tour ${oldT} nach Tour ${s.t} (${tnames[s.t-1]}) verschoben – nächster Klient dort ${s.near.toFixed(1)} km entfernt. Anders gewünscht? Unter „Touren“ das Auswahlfeld ändern.`):`→ automatisch Tour ${s.t} (${tnames[s.t-1]}) zugeordnet: nächster Klient ${s.near.toFixed(1)} km entfernt, Tour danach ca. ${s.hrs.toFixed(1).replace(".",",")} h vor Ort.`}}
+ else c.t=+$("#f_t").value;
+ save();renderAll();fillForm(null);if(!isNew){KSEL=c.id;renderKlient();show("klient")}
+ flash(`✅ ${h(c.n)} gespeichert. ${info} Reihenfolge von Tour ${c.t}${oldT&&oldT!=c.t?` und Tour ${oldT}`:""} neu optimiert.${optimize(c.t).hrs>MAXH?` ⚠ Tour ${c.t} liegt jetzt über ${MAXH} h – prüfe „Touren ausgleichen“.`:""}`)}
+function archive(id){const c=C.find(x=>x.id==id);const g=prompt(`${c.n} archivieren.\nGrund (z. B. verstorben, Betreuung beendet, umgezogen):`,"verstorben");if(g===null)return;
+ c.on=0;c.why=g;c.end=new Date().toISOString().slice(0,10);save();renderAll();
+ if(!c.t){flash(`🕊 ${h(c.n)} archiviert (${h(g)}).`);return}
+ const o=optimize(c.t);flash(`🕊 ${h(c.n)} archiviert (${h(g)}). Tour ${c.t} neu optimiert: jetzt ${o.pers} Pers., ca. ${o.hrs.toFixed(1).replace(".",",")} h vor Ort.${o.hrs<3&&o.pers?" Die Tour ist jetzt schwach ausgelastet – „Touren ausgleichen“ zeigt Vorschläge.":""}`)}
+function restore(id){const c=C.find(x=>x.id==id);c.on=1;delete c.why;delete c.end;save();renderAll();flash(`${h(c.n)} wieder aktiv (Tour ${c.t}).`)}
+function rebalance(){const res=[];const T=[...Array(tourCount())].map((_,i)=>({t:i+1,...optimize(i+1)}));
+ T.filter(x=>x.hrs>MAXH).forEach(x=>{let best=null;act().filter(c=>c.t==x.t).forEach(c=>{T.filter(y=>y.t!=x.t&&y.hrs+0.8<=MAXH&&y.pers).forEach(y=>{const d=Math.min(...stopsOf(y.t).map(s=>dist(s.p,P(c))));if(!best||d<best.d)best={c,y,d}})});
+  if(best)res.push(`Tour ${x.t} hat ca. ${x.hrs.toFixed(1).replace(".",",")} h → <b>${h(best.c.n)}</b> könnte in Tour ${best.y.t} (${h(tnames[best.y.t-1])}, ${best.d.toFixed(1)} km entfernt). <button class="btn g" onclick="moveTo(${best.c.id},${best.y.t})">übernehmen</button>`)});
+ T.filter(x=>x.pers&&x.hrs<2.5).forEach(x=>res.push(`Tour ${x.t} (${h(tnames[x.t-1])}) ist mit ca. ${x.hrs.toFixed(1).replace(".",",")} h schwach ausgelastet – gut für Nachhol- oder Ersttermine.`));
+ flash(res.length?res.join("<br>"):"⚖️ Alle Touren liegen zwischen 2,5 und "+MAXH+" h vor Ort – nichts zu tun.")}
+function tourOpts(cur){return [...Array(tourCount())].map((_,i)=>`<option value="${i+1}"${cur==i+1?" selected":""}>Tour ${i+1}</option>`).join("")+`<option value="0"${cur==0?" selected":""}>ohne Tour</option>`}
+function moveTo(id,t){const c=C.find(x=>x.id==id),o=c.t;if(o==t)return;if(t>0&&!hasP(c)){renderAll();fillForm(c);$("#f_t").value=String(t);flash(`Für ${h(c.n)} fehlt noch die Adresse. Bitte im Formular eintragen und speichern – dann kommt ${h(c.n)} in Tour ${t}.`);return}c.t=t;save();renderAll();flash(`${h(c.n)} ${t?"dauerhaft nach Tour "+t+" verschoben":"dauerhaft aus der Tour genommen (jetzt: ohne Tour – Telefon/Büro)"}${o?". Tour "+o+" ist neu optimiert":""}. Rückgängig: wieder ${o?"Tour "+o:"„ohne Tour“"} wählen.`)}
+// ---------- Anzeige ----------
+const DAY=864e5,today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const fmt=d=>d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
+const NEED={H:4,A:2,E:1,"?":2};
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+function easter(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;return new Date(y,mo-1,da)}
+const HOLC={};function holidays(y){if(HOLC[y])return HOLC[y];const E=easter(y),o={};const add=(d,n)=>o[isoD(d)]=n;
+ add(new Date(y,0,1),"Neujahr");add(addD(E,-2),"Karfreitag");add(addD(E,1),"Ostermontag");add(new Date(y,4,1),"Tag der Arbeit");add(addD(E,39),"Christi Himmelfahrt");add(addD(E,50),"Pfingstmontag");
+ add(new Date(y,9,3),"Tag der Deutschen Einheit");add(new Date(y,9,31),"Reformationstag");add(new Date(y,11,24),"Heiligabend");add(new Date(y,11,25),"1. Weihnachtstag");add(new Date(y,11,26),"2. Weihnachtstag");add(new Date(y,11,31),"Silvester");return HOLC[y]=o}
+function blockReason(d){const s=isoD(d),h=holidays(d.getFullYear())[s];if(h)return h;const b=BLK.find(x=>s>=x.von&&s<=x.bis);return b?(b.grund||"gesperrt"):null}
+function ordList(){const n=tourCount();const o=(ORD||[]).filter(x=>x>=1&&x<=n);for(let i=1;i<=n;i++)if(!o.includes(i))o.push(i);return[...new Set(o)]}
+function prioC(c){const p=plan(c);let v=p.kind=="U"?3:p.dd<-180?2:p.dd<0?1:0;const lim=isoD(addD(today(),21));if((LOG[c.id]||[]).some(e=>e.wv&&!e.done&&e.wvd&&e.wvd<=lim))v+=2;return v}
+function prio(t){return act().filter(c=>c.t==t).reduce((s,c)=>s+prioC(c),0)}
+function sortOrd(){S.set("ta2_ordman",1);const n=tourCount();ORD=[...Array(n)].map((_,i)=>i+1).sort((a,b)=>prio(b)-prio(a)||a-b);SCHC=null;save();renderAll();renderCal();flash("Touren nach Dringlichkeit sortiert: "+ORD.map(x=>"T"+x).join(" → "))}
+function moveOrd(i,d){S.set("ta2_ordman",1);const o=ordList();const j=i+d;if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];ORD=o;SCHC=null;save();renderAll();renderCal()}
+let SCHC=null;function schedTours(){if(!START)return[];if(SCHC&&SCHC.k==START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD))return SCHC.v;const OL=ordList();const [y,m,dd]=START.split("-").map(Number);let d=new Date(y,m-1,dd),idx=0;const out=[];
+ for(let i=0;i<160;i++){const br=blockReason(d);if(br){out.push({d,t:0,skip:br})}else{const pos=idx%12;out.push({d,t:pos<tourCount()?OL[pos]:0,buf:pos>=tourCount()});idx++}d=addD(d,7)}
+ SCHC={k:START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD),v:out};return out}
+function nextTour(t,from){if(!START||!t)return null;const f=from||today();const x=schedTours().find(s=>s.t==t&&s.d>=f);return x?x.d:null}
+function contacts(c){return (LOG[c.id]||[]).slice().sort((a,b)=>a.d<b.d?1:-1)}
+function plan(c){const L=contacts(c).filter(x=>x.typ!="D"),lc=L[0],nt=nextTour(c.t,today()),yr=new Date(today().getTime()-365*DAY).toISOString().slice(0,10);
+ const visits=L.filter(x=>x.typ=="B"&&x.d>=yr).length,need=Math.max(0,(NEED[c.r]||2)-visits);
+ if(c.noCall&&!lc)return{kind:"",txt:"📞 regelmäßiger Telefonkontakt",cls:"okk",dd:999,nt};
+ const tel=!c.noPhone&&!c.noCall&&c.r!="H";
+ if(!lc){const far=tel&&(!nt||nt>addD(today(),21));return{kind:"U",txt:"letzter Kontakt unbekannt – bitte nachtragen"+(far?(c.t?" · 📞 bis zur Tour"+(nt?" am "+fmt(nt):"")+" einmal anrufen":" · 📞 anrufen oder ☕ ins mobile Büro einladen"):""),cls:"tel",dd:999,nt,call:far}}
+ const base=c.r=="H"?(L.find(x=>x.typ=="B")||lc):lc;const due=addD(new Date(base.d+"T00:00"),91);const dd=Math.round((due-today())/DAY);
+ if(nt&&(need>0||c.noPhone)&&(nt<=addD(due,21)||nt<=addD(today(),c.noPhone?42:21))&&(!tel||nt>=addD(due,-35))){const zw=tel&&nt>due&&nt>addD(today(),21)&&dd<=CALLW;return{kind:"B",txt:`Besuch bei Tour ${c.t} am ${fmt(nt)}${dd<0?" (überfällig seit "+(-dd)+" T.)":""}`+(zw?` · 📞 Zwischenanruf bis ${fmt(dd<0?today():due)}`:""),cls:dd<=14||zw?"due":"okk",dd,nt,call:zw}}
+ if((c.noPhone||(c.r=="H"&&c.t))&&dd<=14)return{kind:"V",txt:`🚗 Besuch fällig${dd<0?" (seit "+(-dd)+" T.)":" bis "+fmt(due)}`+(c.noPhone?" – nicht telefonisch erreichbar":" – immer Hausbesuch")+``+(c.t?(nt?` · Tour erst ${fmt(nt)}`:""):""),cls:"due",dd,nt};
+ if(c.noCall)return{kind:"",txt:"📞 regelmäßiger Telefonkontakt"+(nt&&need>0?` · Besuch mit Tour ${c.t} am ${fmt(nt)}`:""),cls:"okk",dd:999,nt};
+ if(dd<=CALLW)return{kind:"A",txt:`📞 Anruf fällig${dd<0?" (seit "+(-dd)+" T.)":dd==0?" (heute)":" bis "+fmt(due)}`+(c.t?(nt?` – Tour erst ${fmt(nt)}`:""):need>0?` – oder ☕ ins mobile Büro einladen (noch ${need}× Büro im Jahr)`:" – Büro-Termine für dieses Jahr erfüllt"),cls:"due",dd,nt};
+ return{kind:"",txt:`ok · nächster Kontakt bis ${fmt(due)}`+(tel&&nt&&nt<addD(due,-35)?` · Besuch bei Tour ${c.t} am ${fmt(nt)} nicht nötig`:""),cls:"okk",dd,nt}}
+const isDue=c=>plan(c).dd<=14;const CALLW=28;
+function preCalls(){return act().map(c=>[c,plan(c)]).filter(([c,p])=>!c.noPhone&&!c.noCall&&c.r!="H"&&!(p.kind=="A"||p.call)&&p.kind!="U"&&p.dd<=60&&(!p.nt||p.nt>addD(today(),42))).sort((a,b)=>a[1].dd-b[1].dd)}
+const status=c=>{const p=plan(c);return `<span class="tag ${p.cls}">${p.txt}</span>`};
+const ARTEN=["Hausbesuch","Besuch Einrichtung","Mobiles Büro","Anruf","Termin mit Dritten"];
+const typOf=a=>a=="Anruf"?"A":a=="Termin mit Dritten"?"D":"B";
+const nowHM=()=>hm(new Date());const isoToday=()=>isoD(new Date());
+const dmy=s=>s?s.split("-").reverse().join("."):"";
+const mins=e=>{if(!e.von||!e.bis)return"";const [a,b]=e.von.split(":").map(Number),[c,d]=e.bis.split(":").map(Number);const m=(c*60+d)-(a*60+b);return m>0?m:""};
+function closeDlg(){$("#dlg").hidden=true;$("#dlgc").innerHTML=""}
+function openDlg(id,typ,idx){const c=C.find(x=>x.id==id);const e=idx!=null?LOG[id][idx]:null;const run=RUN[id];
+ const art=e?e.art||(e.typ=="A"?"Anruf":"Hausbesuch"):typ=="A"?"Anruf":c.t==0?"Mobiles Büro":c.e=="E"?"Besuch Einrichtung":"Hausbesuch";
+ const von=e?e.von||"":run?hm(new Date(run)):(typ=="A"?nowHM():""),bis=e?e.bis||"":run?nowHM():"";
+ $("#dlgc").innerHTML=`<h2>${e?"Kontakt bearbeiten":"Kontakt eintragen"}: ${h(c.n)}</h2>
+ <div class="row"><div><label for="k_d">Datum</label><input type="date" id="k_d" value="${e?e.d:isoToday()}"></div><div><label for="k_art">Art</label><select id="k_art">${ARTEN.map(a=>`<option${a==art?" selected":""}>${a}</option>`).join("")}</select></div></div>
+ <div class="row"><div><label for="k_von">Beginn</label><div class="row" style="flex-wrap:nowrap;gap:4px"><input type="time" id="k_von" value="${von}"><button class="btn g" style="flex:0 0 auto;min-width:0;margin:0" onclick="$('#k_von').value=nowHM()">jetzt</button></div></div>
+ <div><label for="k_bis">Ende</label><div class="row" style="flex-wrap:nowrap;gap:4px"><input type="time" id="k_bis" value="${bis}"><button class="btn g" style="flex:0 0 auto;min-width:0;margin:0" onclick="$('#k_bis').value=nowHM()">jetzt</button></div></div></div>
+ <label for="k_anw">Anwesend (optional)</label><input id="k_anw" value="${h(e?e.anw||"":"")}" placeholder="z. B. Pflegekraft, Tochter">
+ <label for="k_txt">Besprochen</label><textarea id="k_txt" rows="4" placeholder="Stichpunkte – Mikrofon der Tastatur für Spracheingabe nutzen">${h(e?e.txt||"":"")}</textarea>
+ <div class="row"><div style="flex:2"><label for="k_wv">Wiedervorlage / To-do (optional)</label><input id="k_wv" value="${h(e?e.wv||"":"")}" placeholder="z. B. Antrag Grundsicherung stellen"></div><div><label for="k_wvd">bis</label><input type="date" id="k_wvd" value="${e?e.wvd||"":""}"></div></div>
+ <div style="margin-top:10px"><button class="btn" onclick="saveDlg(${id},${idx!=null?idx:"null"})">Speichern</button>${!e&&!run&&typ!="A"?`<button class="btn g" onclick="startRun(${id})">⏱ Besuch jetzt starten</button>`:""}${run&&!e?`<button class="btn g" onclick="delete RUN[${id}];save();closeDlg();renderAll()">Zeitmessung verwerfen</button>`:""}<button class="btn g" onclick="closeDlg()">Abbrechen</button></div>`;
+ $("#dlg").hidden=false;$("#dlg").scrollTop=0}
+function saveDlg(id,idx){const art=$("#k_art").value,d=$("#k_d").value;if(!d){flash("Bitte ein Datum angeben.");return}
+ const e={d,typ:typOf(art),art,von:$("#k_von").value,bis:$("#k_bis").value,anw:$("#k_anw").value.trim(),txt:$("#k_txt").value.trim(),wv:$("#k_wv").value.trim(),wvd:$("#k_wvd").value};
+ if(idx!=null){e.done=LOG[id][idx].done;LOG[id][idx]=e}else{(LOG[id]=LOG[id]||[]).push(e);delete RUN[id]}
+ save();closeDlg();renderAll();const m=mins(e);flash(`${art} am ${dmy(d)} gespeichert${m?" ("+m+" Min.)":""}.${e.wv?" Wiedervorlage steht unter „Kontakte“.":""}`)}
+function startRun(id){RUN[id]=new Date().toISOString();save();closeDlg();renderAll();flash("⏱ Besuch läuft – am Ende beim Klienten auf „⏹ Besuch beenden“ tippen.")}
+function delEntry(id,idx){LOG[id].splice(idx,1);save();openHist(id);renderAll()}
+function wvDone(id,idx){LOG[id][idx].done=true;save();renderAll();flash("Wiedervorlage erledigt.")}
+function openHist(id){const c=C.find(x=>x.id==id);const L=(LOG[id]||[]).map((e,i)=>[e,i]).sort((a,b)=>a[0].d<b[0].d?1:-1);
+ $("#dlgc").innerHTML=`<h2>Verlauf: ${h(c.n)}</h2>${L.length?L.map(([e,i])=>`<div class="c"><div style="min-width:0"><div class="n">${dmy(e.d)} · ${h(e.art||(e.typ=="A"?"Anruf":"Besuch"))}${mins(e)?` · ${e.von}–${e.bis} (${mins(e)} Min.)`:""}</div>${e.anw?`<div class="m">Anwesend: ${h(e.anw)}</div>`:""}${e.txt?`<div class="m" style="white-space:pre-wrap">${h(e.txt)}</div>`:""}${e.wv?`<div class="m">📌 ${h(e.wv)}${e.wvd?" bis "+dmy(e.wvd):""}${e.done?" ✓ erledigt":""}</div>`:""}</div>
+ <div style="white-space:nowrap"><button class="btn g" onclick="openDlg(${id},null,${i})">✏️</button><button class="btn w" onclick="delEntry(${id},${i})">✕</button></div></div>`).join(""):'<div class="hint">Noch keine Kontakte erfasst.</div>'}
+ <button class="btn" onclick="openDlg(${id},'B')">+ Kontakt eintragen</button><button class="btn g" onclick="closeDlg()">Schließen</button>`;$("#dlg").hidden=false}
+function logC(id,typ){openDlg(id,typ)}
+function openSP(){const opt=PL.map(p=>`<option value="${p.id}">${h(p.n)}</option>`).join("");const L=act().slice().sort((a,b)=>(a.t?1:0)-(b.t?1:0)||a.n.localeCompare(b.n));
+ $("#dlgc").innerHTML=`<h2>☕ Sprechstunde erfassen</h2><label for="s_o">Ort</label><select id="s_o">${opt}</select>
+ <div class="row"><div><label for="s_d">Datum</label><input type="date" id="s_d" value="${isoToday()}"></div><div><label for="s_v">von</label><input type="time" id="s_v" value="10:00"></div><div><label for="s_b">bis</label><input type="time" id="s_b" value="12:00"></div></div>
+ <label for="s_q">Wer war da? (antippen)</label><input id="s_q" type="search" placeholder="Name filtern …" oninput="document.querySelectorAll('#s_l label').forEach(l=>l.hidden=!l.textContent.toLowerCase().includes(this.value.toLowerCase()))">
+ <div id="s_l" style="max-height:40vh;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:4px 8px;margin-top:6px">${L.map(c=>`<label style="display:flex;gap:8px;align-items:center;padding:7px 0;color:var(--ink);font-size:14px;margin:0"><input type="checkbox" value="${c.id}" style="width:auto"> ${h(c.n)}${c.t?"":" · Büro"}</label>`).join("")}</div>
+ <label for="s_n">Notiz zur Sprechstunde (optional)</label><input id="s_n" placeholder="z. B. Formulare ausgefüllt">
+ <div style="margin-top:10px"><button class="btn" onclick="saveSP()">Speichern</button><button class="btn g" onclick="closeDlg()">Abbrechen</button></div>`;$("#dlg").hidden=false}
+function saveSP(){const ids=[...document.querySelectorAll("#s_l input:checked")].map(x=>+x.value);const p=PL.find(x=>x.id==$("#s_o").value);const d=$("#s_d").value;if(!d){flash("Bitte Datum angeben.");return}
+ const sp={id:Date.now(),d,von:$("#s_v").value,bis:$("#s_b").value,ort:p?p.n:"",ids,note:$("#s_n").value.trim()};SP.push(sp);
+ ids.forEach(id=>(LOG[id]=LOG[id]||[]).push({d,typ:"B",art:"Mobiles Büro",von:"",bis:"",anw:"",txt:"Sprechstunde "+(p?p.n.replace(/^Mobiles Büro[^:]*:\s*/,""):"")+(sp.note?" – "+sp.note:""),wv:"",wvd:"",sp:sp.id}));
+ save();closeDlg();renderAll();flash(`Sprechstunde am ${dmy(d)} gespeichert – ${ids.length} Klient${ids.length==1?"":"en"} als Kontakt eingetragen.`)}
+function editSP(id){const s=SP.find(x=>x.id==id);openSP();$("#s_o").value=(PL.find(p=>p.n==s.ort)||{}).id||$("#s_o").value;$("#s_d").value=s.d;$("#s_v").value=s.von;$("#s_b").value=s.bis;$("#s_n").value=s.note||"";
+ document.querySelectorAll("#s_l input").forEach(x=>{if(s.ids.includes(+x.value)){x.checked=true;x.disabled=true}});
+ document.querySelector("#dlgc button.btn").setAttribute("onclick",`addToSP(${id})`)}
+function addToSP(id){const s=SP.find(x=>x.id==id);const neu=[...document.querySelectorAll("#s_l input:checked:not(:disabled)")].map(x=>+x.value);
+ neu.forEach(cid=>{s.ids.push(cid);(LOG[cid]=LOG[cid]||[]).push({d:s.d,typ:"B",art:"Mobiles Büro",von:"",bis:"",anw:"",txt:"Sprechstunde "+s.ort.replace(/^Mobiles Büro[^:]*:\s*/,"")+(s.note?" – "+s.note:""),wv:"",wvd:"",sp:s.id})});
+ save();closeDlg();renderAll();flash(`${neu.length} Person${neu.length==1?"":"en"} zur Sprechstunde hinzugefügt.`)}
+function delSP(id){SP=SP.filter(s=>s.id!=id);Object.keys(LOG).forEach(k=>LOG[k]=LOG[k].filter(e=>e.sp!=id));save();renderAll()}
+const mark=id=>logC(id,"B");
+function nachtrag(id){return openDlg(id,"B");const v=prompt("");if(!v)return;const m=v.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);if(!m){flash("Datum bitte als TT.MM.JJJJ.");return}
+ const typ=confirm("War das ein persönlicher BESUCH?\nOK = Besuch · Abbrechen = Anruf")?"B":"A";(LOG[id]=LOG[id]||[]).push({d:`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`,typ});save();renderAll();flash("Kontakt nachgetragen.")}
+const fullAdr=a=>/[A-Za-zäöüßÄÖÜ].*\d+[a-z]?\s*,\s*\d{5}\s+\S/.test(a||"");
+const wpt=s=>fullAdr(s.a)||(s.bank&&/[A-Za-zäöü]/.test(s.a))?s.a:(s.mq||(s.p?s.p.join(","):s.a));
+const bAdr=b=>b.s&&/\d/.test(b.s)?`${b.s}, ${[b.pc,b.ci||(b.pc?"":"Hamburg")].filter(Boolean).join(" ")}`:b.p.join(",");
+const nav=a=>`https://www.google.com/maps/dir/?api=1&destination=${enc(a)}`;
+const gm=(q,p)=>`https://www.google.com/maps/search/${enc(q)}/@${p[0]},${p[1]},16z`;
+let OPEN=new Set();function togOpen(id){OPEN.has(id)?OPEN.delete(id):OPEN.add(id);renderAll()}
+function histBlock(c){const L=(LOG[c.id]||[]).map((e,i)=>[e,i]).sort((a,b)=>a[0].d<b[0].d?1:-1);
+ return `<div style="margin:6px 0 2px;padding:8px 10px;border-left:3px solid var(--acc);background:var(--bg);border-radius:6px">${L.length?L.map(([e,i])=>`<div style="padding:4px 0;border-bottom:1px solid var(--line)"><div class="n" style="font-size:14px">${dmy(e.d)} · ${h(e.art||(e.typ=="A"?"Anruf":"Besuch"))}${mins(e)?` · ${e.von}–${e.bis}`:""} <button class="btn g" style="padding:2px 8px;margin:0 0 0 4px" onclick="openDlg(${c.id},null,${i})">✏️</button></div>${e.txt?`<div class="m" style="white-space:pre-wrap">${h(e.txt)}</div>`:""}${e.wv?`<div class="m">📌 ${h(e.wv)}${e.wvd?" bis "+dmy(e.wvd):""}${e.done?" ✓":""}</div>`:""}</div>`).join(""):'<div class="m">Noch keine Termine erfasst.</div>'}</div>`}
+function card(c,km,extra=""){const L=LOG[c.id]||[],last=L.slice().sort((a,b)=>a.d<b.d?1:-1)[0];return `<div class="c"><div style="min-width:0;flex:1"><div class="n" style="cursor:pointer" onclick="openKlient(${c.id})">${h(c.n)} <span class="tag tel">${RT[c.r][0]}</span>${status(c)}</div>
+ <div class="m">${h(c.a)} · ${c.t?"Tour "+c.t:"ohne Tour"}${c.bank?" · 🏦 "+h(c.bank):""}${c.note?" · "+h(c.note):""}${extra}</div><div class="m" style="cursor:pointer" onclick="togOpen(${c.id})">${last?`Zuletzt: ${dmy(last.d)} · ${h(last.art||(last.typ=="A"?"Anruf":"Besuch"))} · ${L.length} Termin${L.length==1?"":"e"} ${OPEN.has(c.id)?"▴ zuklappen":"▾ anzeigen"}`:"Noch keine Termine erfasst"}</div>${OPEN.has(c.id)?histBlock(c):""}
+ <a class="btn g" href="${nav(c.a)}" target="_blank">Navi</a>${RUN[c.id]?`<button class="btn run" onclick="openDlg(${c.id},'B')">⏹ Besuch beenden (seit ${hm(new Date(RUN[c.id]))})</button>`:`<button class="btn g" onclick="logC(${c.id},'B')">✓ Besuch</button>`}<button class="btn g" onclick="logC(${c.id},'A')">📞 Anruf</button><button class="btn g" onclick="openHist(${c.id})">🗂 Verlauf</button><button class="btn g" onclick="fillForm(C.find(x=>x.id==${c.id}))">✏️</button>${GO&&hasP(c)?`<button class="btn ${PICK.has(c.id)?"":"g"}" onclick="togPick(${c.id})">${PICK.has(c.id)?"− heute raus":"+ heute mit"}</button>`:""}</div>
+ ${km!=null?`<div class="km">${km.toFixed(1)} km</div>`:""}</div>`}
+function segDist(p,a,b){const f=Math.cos(a[0]*Math.PI/180),dx=(b[0]-a[0]),dy=(b[1]-a[1])*f,L=dx*dx+dy*dy;let t=L?((p[0]-a[0])*dx+(p[1]-a[1])*f*dy)/L:0;t=Math.max(0,Math.min(1,t));return{d:Math.hypot(p[0]-a[0]-t*dx,(p[1]-a[1])*f-t*dy)*111.2,t}}
+let here=null,bankCache={};
+const splitB=want=>[...new Set([...want].filter(Boolean).flatMap(x=>String(x).split(/,|\/|\bund\b|\+/i)).map(s=>s.trim()).filter(s=>s&&!/^(keine?|unbekannt)$|vermögenssorge/i.test(s)))];
+async function loadBanks(p,el,want,z){const dest=z?z.a:null;const via=(b)=>dest?`https://www.google.com/maps/dir/?api=1&destination=${enc(dest)}&waypoints=${enc(bAdr(b))}&travelmode=driving`:`https://www.google.com/maps/dir/?api=1&destination=${enc(bAdr(b))}`;
+ const near=q=>`https://www.google.com/maps/search/?api=1&query=${enc(q+" in der Nähe von "+(dest||p.join(",")))}`;
+ const hb=splitB(want);const fb=`<div class="hint">Bankensuche hat nicht geantwortet. Diese Links öffnen Google Maps direkt rund um ${dest?h(z.n):"deinen Standort"}:</div>
+  ${hb.map(x=>`<a class="btn" target="_blank" href="${near(x)}">🏦 ${h(x)} (Hausbank)</a>`).join("")}<a class="btn" target="_blank" href="${near("Bank")}">🏦 Banken</a><a class="btn" target="_blank" href="${near("Sparkasse")}">Haspa</a><a class="btn" target="_blank" href="${near("Geldautomat")}">💶 Geldautomat</a>`;const key=p.map(x=>x.toFixed(3)).join();
+ if(!bankCache[key]){el.innerHTML='<div class="hint">Suche Banken …</div>';
+  try{const q=`[out:json][timeout:15];nwr(around:1500,${p[0]},${p[1]})[amenity~"^(bank|atm)$"];out center 60;`;let j=null;
+   for(const u of ["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"]){try{const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),12000);const r=await fetch(u+"?data="+enc(q),{signal:ctl.signal});clearTimeout(tm);if(r.ok){j=await r.json();break}}catch(e){}}
+   if(!j)throw new Error("keine Antwort");
+   bankCache[key]=j.elements.map(e=>({n:e.tags.name||e.tags.operator||e.tags.brand||(e.tags.amenity=="atm"?"Geldautomat":"Bank"),atm:e.tags.amenity=="atm",o:e.tags.opening_hours||"",s:[e.tags["addr:street"],e.tags["addr:housenumber"]].filter(Boolean).join(" "),pc:e.tags["addr:postcode"]||"",ci:e.tags["addr:city"]||"",p:[e.lat??e.center.lat,e.lon??e.center.lon]}))}
+  catch(e){el.innerHTML=fb;return}}
+ const seen=new Set();let L=bankCache[key].map(b=>({...b,d:dist(p,b.p)/1.3})).sort((a,b)=>a.d-b.d).filter(b=>{const k=b.n+b.s;if(seen.has(k))return 0;seen.add(k);return 1});
+ const w=splitB(want).map(x=>x.toLowerCase()),hit=b=>w.some(x=>b.n.toLowerCase().includes(x)||(x.includes("haspa")&&/sparkasse/i.test(b.n)));
+ const top=window._BL=[...L.filter(hit),...L.filter(b=>!hit(b)&&!b.atm).slice(0,6),...L.filter(b=>!hit(b)&&b.atm).slice(0,3)];
+ el.innerHTML=top.length?top.map(b=>`<div class="c"><div><div class="n">${b.atm?"💶":"🏦"} ${h(b.n)}${hit(b)?' <span class="tag okk">Hausbank</span>':""}</div><div class="m">${h(b.s||"Adresse siehe Karte")}${b.o?" · "+h(b.o):""}</div>
+ ${dest?`<button class="btn ${PB&&PB.n==b.n&&PB.p[0]==b.p[0]?"":"g"}" onclick="togBank(${top.indexOf(b)})">${PB&&PB.n==b.n&&PB.p[0]==b.p[0]?"✓ im Rundweg":"➕ Rundweg"}</button>`:""}<a class="btn g" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${enc(bAdr(b))}">Navi</a></div><div class="km">${b.d.toFixed(1)} km</div></div>`).join("")+fb.replace(/^<div class="hint">[^<]*<\/div>/,'<div class="hint" style="margin-top:8px">Mehr in Google Maps:</div>'):fb}
+function togPick(id){PICK.has(id)?PICK.delete(id):PICK.add(id);renderGo()}
+function togBank(i){const b=(window._BL||[])[i];PB=PB&&b&&PB.n==b.n&&PB.p[0]==b.p[0]?null:b;renderGo()}
+let RDATE="",RTIME="11:00";
+const isoD=d=>{const x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`};
+function nextWed(){const d=today();d.setDate(d.getDate()+((3-d.getDay()+7)%7||7));return d}
+const hm=d=>`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+function schedule(o){const [Y,M,D]=($("#rdate")?.value||RDATE||isoD(nextWed())).split("-").map(Number),[H,Mi]=RTIME.split(":").map(Number);let cur=new Date(Y,M-1,D,H,Mi);const out=[];
+ o.forEach((s,i)=>{if(i){const km=dist(o[i-1].p,s.p);cur=new Date(cur.getTime()+Math.max(5,Math.round(km/25*60))*6e4)}
+  const ids=act().filter(c=>c.a==s.a&&(PICK.has(c.id)||(LASTZ&&c.id==LASTZ)));const mins=s.bank?15:Math.max(1,s.ppl||ids.length||1)*((ids[0]||{}).e=="W"?60:45);
+  const e=new Date(cur.getTime()+mins*6e4);out.push({st:s,s:cur,e});cur=e});
+ out.back=new Date(cur.getTime()+75*6e4);out.dep=new Date((out[0]?out[0].s:cur).getTime()-75*6e4);out.hrs=(out.back-out.dep)/36e5;return out}
+const H8=h=>h>8;const hrsTxt=h=>h.toFixed(1).replace(".",",");
+const gd=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}${String(d.getMinutes()).padStart(2,"0")}00`;
+function gcal(x){const n=x.st.bank?x.st.n.replace("🏦 ","Bank: "):"Besuch "+x.st.n;return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${enc(n)}&dates=${gd(x.s)}/${gd(x.e)}&ctz=Europe/Berlin&location=${enc(x.st.bank?x.st.a:x.st.a)}&details=${enc("Geplant mit Tour-Assistent")}`}
+function gcalAll(sch){if(!sch.length)return"#";const first=sch[0],last=sch[sch.length-1];const det=sch.map(x=>`${hm(x.s)} ${x.st.n.replace("🏦 ","Bank: ")} – ${x.st.a}`).join("\n");
+ return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${enc((H8(sch.hrs)?"‼️ >8 Std. außer Haus · ":"")+"Rundweg: "+sch.map(x=>x.st.n.split(" (")[0].replace("🏦 ","")).join(", "))}&dates=${gd(first.s)}/${gd(last.e)}&ctz=Europe/Berlin&location=${enc(first.st.a)}&details=${enc(det)}`}
+function icsLoop(){const lo=window._LO;if(!lo)return;const sch=schedule(lo.o),esc2=s=>String(s).replace(/[\\,;]/g,m=>"\\"+m);let s="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//TourApp//DE\r\n";
+ sch.forEach((x,i)=>{s+=`BEGIN:VEVENT\r\nUID:rw-${gd(x.s)}-${i}@tourapp\r\nDTSTAMP:${gd(new Date())}\r\nDTSTART;TZID=Europe/Berlin:${gd(x.s)}\r\nDTEND;TZID=Europe/Berlin:${gd(x.e)}\r\nSUMMARY:${esc2(x.st.bank?x.st.n.replace("🏦 ","Bank: "):"Besuch "+x.st.n)}\r\nLOCATION:${esc2(x.st.a)}\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:Besuch\r\nTRIGGER:-PT30M\r\nEND:VALARM\r\nEND:VEVENT\r\n`});
+ if(H8(sch.hrs)){const d0=sch[0].s,ds=gd(d0).slice(0,8),dn=gd(new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()+1)).slice(0,8);s+=`BEGIN:VEVENT\r\nUID:rw8-${ds}@tourapp\r\nDTSTAMP:${gd(new Date())}\r\nDTSTART;VALUE=DATE:${ds}\r\nDTEND;VALUE=DATE:${dn}\r\nSUMMARY:‼️ ÜBER 8 STD. AUSSER HAUS (${hrsTxt(sch.hrs)} Std.)\r\nEND:VEVENT\r\n`}
+ s+="END:VCALENDAR\r\n";const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([s],{type:"text/calendar"}));a.download="Rundweg_"+($("#rdate").value)+".ics";document.body.appendChild(a);a.click();a.remove();flash("Kalenderdatei mit "+sch.length+" Terminen erstellt – öffnen, um sie in den Kalender zu übernehmen.")}
+function addFB(){const lo=window._LO;if(!lo)return;const d=($("#rdate")||{}).value||isoToday();const km=+$("#fbkm").value||lo.km;
+ const sch=schedule(lo.o);FB.push({id:Date.now(),d,ab:hm(sch.dep),an:hm(sch.back),stops:lo.o.map(s=>s.n.replace("🏦 ","Bank: ")),adr:lo.o.map(s=>s.bank?"":s.a).filter(Boolean),km,zweck:"Betreuungsbesuche (Berufsbetreuung)"});save();renderProt();flash(`Fahrt am ${dmy(d)} mit ${km} km ins Fahrtenbuch eingetragen (Reiter „Protokoll“).${H8(sch.hrs)?" ‼️ Über 8 Std. außer Haus – markiert.":""} Abfahrt/Rückkehr dort anpassbar.`)}
+const fbH=f=>{if(!f.ab||!f.an)return 0;const [a,b]=f.ab.split(":").map(Number),[c,d]=f.an.split(":").map(Number);let m=(c*60+d)-(a*60+b);if(m<0)m+=1440;return m/60};
+function nextFri(){const d=today();const k=(5-d.getDay()+7)%7;return addD(d,k)}
+function friCal(L){const f=nextFri(),s=new Date(f.getFullYear(),f.getMonth(),f.getDate(),9,0),e=new Date(f.getFullYear(),f.getMonth(),f.getDate(),11,0);
+ return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${enc("📞 Anruftag: "+L.length+" Anrufe")}&dates=${gd(s)}/${gd(e)}&ctz=Europe/Berlin&details=${enc("Anrufen:\n"+L.map(c=>"• "+c.n.split(" (")[0]+(c.tel?" – "+c.tel:"")).join("\n")+"\n\nNach jedem Anruf in der Tour-App „📞 Anruf“ eintragen.")}`}
+function setMode(m){MODE=m;S.set("ta2_mode",m);LASTZ=null;renderGo()}
+function setRW(v){RW=v;S.set("ta2_rw",v);renderGo()}
+function loopPts(z,p){const all={...EX.W,...EX.O,...EX.N};
+ if(p[1]>10.0){const e=Object.values(EX.O).sort((a,b)=>dist(a,p)-dist(b,p))[0];return[HOME,WP.KOST,e,p]}
+ if(p[0]>53.65&&p[1]<9.85)return[HOME,WP.KOST,WP.KSUED,WP.MASCH,WP.ELB,WP.A23,p];
+ if(RW=="stadt")return[HOME,WP.KOST,WP.HORN,p];
+ let e=z&&z.t?all[optimize(z.t).inE]:null;if(!e||e[1]>10)e=Object.values(EX.W).sort((a,b)=>dist(a,p)-dist(b,p))[0];return[HOME,WP.KOST,WP.KSUED,WP.MASCH,WP.ELB,e,p]}
+function detour(q,pts){let best=1e9,seg=0;for(let i=0;i<pts.length-1;i++){const v=dist(pts[i],q)+dist(q,pts[i+1])-dist(pts[i],pts[i+1]);if(v<best){best=v;seg=i}}return{km:best,seg}}
+function loopOrder(z,p){const pts=loopPts(z,p),E=pts[pts.length-2];
+ const S0=[{n:z?z.n:"Ziel",a:z?z.a:p.join(","),mq:z&&z.mq,p,ppl:z&&z.t?1:0}];
+ const byA=new Map();act().filter(c=>PICK.has(c.id)&&hasP(c)).forEach(c=>{if(z&&c.a==z.a){S0[0].ppl++;S0[0].n+=" + "+c.n;return}if(!byA.has(c.a))byA.set(c.a,{n:c.n,a:c.a,p:P(c),ppl:0});const s=byA.get(c.a);s.ppl++;if(s.n!=c.n&&!s.n.includes(c.n))s.n+=" + "+c.n});
+ let st=[...S0,...byA.values()];if(PB)st.push({n:"🏦 "+PB.n,a:bAdr(PB),p:PB.p,ppl:0,bank:1});
+ let best=null;for(const o of (st.length<=7?perms(st):[st])){let L=dist(E,o[0].p);for(let i=0;i<o.length-1;i++)L+=dist(o[i].p,o[i+1].p);L+=dist(o[o.length-1].p,E);if(!best||L<best.L)best={L,o}}
+ let far=0;for(let i=0;i<pts.length-2;i++)far+=dist(pts[i],pts[i+1]);
+ const ppl=best.o.reduce((s,x)=>s+x.ppl,0);return{o:best.o,km:loopKm(best.o.map(s=>s.p)),min:ppl*45+best.o.length*10+(PB?15:0)}}
+function renderGo(){GO=true;const A=act();const r=+$("#rad").value;$("#radc").innerHTML=[2,4,6,8,10].map(k=>`<button class="chip${k==r?" on":""}" onclick="setRad(${k})">${k} km</button>`).join("");
+ const zv=$("#ziel").value;if(!here&&!FREEZ&&!$("#zq").value){$("#out").innerHTML='<div class="card hint">Oben einen Namen eintippen – z. B. ein Name – und den Treffer antippen.</div>';return}const z=here?null:FREEZ?FREEZ:(String(zv).startsWith("p")?PL.find(x=>x.id==zv):A.filter(hasP).find(c=>c.id==+zv))||A.filter(hasP)[0];if(!z&&!here){$("#out").innerHTML="";return}const p=here||P(z);if(LASTZ!==(z?z.id:"gps")){PICK=new Set(z&&z.t&&MODE=="tour"?A.filter(c=>c.t==z.t&&hasP(c)&&c.id!=z.id).map(c=>c.id):[]);PB=null;RDATE="";LASTZ=z?z.id:"gps"}
+ const TMODE=!!(z&&z.t&&MODE=="tour");const TM=z&&z.t?A.filter(c=>c.t==z.t&&hasP(c)&&c.id!=z.id):[];const nt=z&&z.t?nextTour(z.t):null;
+ let o="";if(z){o+=`<div class="card"><h2>Ziel: ${h(z.n)}</h2><div class="m">${h(z.a)}${z.t?" · Tour "+z.t:""}</div>${z.t?status(z):""}<br>${z.id=="free"&&z.approx?`<div class="hint" style="margin:4px 0;color:var(--warn)">⚠ Genaue Adresse nicht gefunden – Lage nach Postleitzahl geschätzt. Google Maps bekommt den Text „${h(z.a)}“; bitte dort prüfen.</div>`:""}${z.id=="free"&&!z.approx?`<div class="hint" style="margin:4px 0">Gefunden: <b>${h(z.a)}</b>${z.typed&&normAdr(z.typed).toLowerCase()!=z.a.toLowerCase()?` (eingegeben: ${h(z.typed)})`:""}. Google Maps bekommt die genaue Position.</div>`:""}<a class="btn" href="${nav(z.mq||z.a)}" target="_blank">🚗 Navigation</a>${z.id=="free"?`<button class="btn g" onclick="saveFree()">⭐ als festen Ort speichern</button>`:""}${z.t!==undefined&&C.includes(z)?(RUN[z.id]?`<button class="btn run" onclick="openDlg(${z.id},'B')">⏹ Besuch beenden (seit ${hm(new Date(RUN[z.id]))})</button>`:`<button class="btn g" onclick="logC(${z.id},'B')">✓ Besuch</button>`)+`<button class="btn g" onclick="logC(${z.id},'A')">📞 Anruf</button><button class="btn g" onclick="openHist(${z.id})">🗂 Verlauf</button>`:""}</div>`;
+  const lo=loopOrder(z,p),url=`https://www.google.com/maps/dir/?api=1&origin=${enc(HOMEA)}&destination=${enc(HOMEA)}&waypoints=${lo.o.map(s=>enc(wpt(s))).join("%7C")}&travelmode=driving`;
+  o+=`<div class="card"><h2>🗺 Dein Rundweg</h2>${z.t?`<div style="margin-bottom:6px"><button class="chip${MODE=="tour"?" on":""}" onclick="setMode('tour')">Ganze Tour ${z.t}</button><button class="chip${MODE=="weg"?" on":""}" onclick="setMode('weg')">Nur auf dem Weg</button></div>`:""}<div class="stop"><div class="num">⌂</div><div class="m">Start: ${HOMEA}</div></div>${lo.o.map((s,i)=>`<div class="stop"><div class="num">${i+1}</div><div><div class="n">${h(s.n)}</div><div class="m">${s.bank?"Bank":h(s.a)}</div></div></div>`).join("")}<div class="stop"><div class="num">⌂</div><div class="m">Ende: ${HOMEA}</div></div>
+  <div class="hint" style="margin:6px 0">ca. ${lo.km} km · vor Ort ca. ${(lo.min/60).toFixed(1).replace(".",",")} h${lo.o.length==1?" · Tipp: unten mit „➕ Rundweg“ Klienten oder eine Bank dazunehmen":""}</div>
+  <a class="btn" target="_blank" href="${url}">🚗 Rundweg in Google Maps starten</a>
+  <div class="row" style="margin-top:10px;gap:8px"><div><label for="rdate">Datum</label><input type="date" id="rdate" value="${RDATE||isoD(nt||nextWed())}" onchange="RDATE=this.value;renderGo()"></div><div><label for="rtime">Ankunft 1. Stopp</label><input type="time" id="rtime" value="${RTIME}" onchange="RTIME=this.value;renderGo()"></div></div>
+  ${(()=>{const sch=schedule(lo.o);return `<div style="margin-top:6px">${sch.map(x=>`<div class="c" style="padding:6px 0"><div><span class="km">${hm(x.s)}–${hm(x.e)}</span> <span class="n">${h(x.st.n)}</span></div><a class="btn g" style="margin:0" target="_blank" href="${gcal(x)}">📅</a></div>`).join("")}${H8(sch.hrs)?`<div class="big8">‼️ ÜBER 8 STUNDEN AUSSER HAUS – ca. ${hrsTxt(sch.hrs)} Std. (Abfahrt ${hm(sch.dep)}, Rückkehr ${hm(sch.back)})</div>`:""}<div class="hint">Abfahrt Zuhause ca. ${hm(sch.dep)} · zurück ca. ${hm(sch.back)} · ${hrsTxt(sch.hrs)} Std. außer Haus · Zeiten geschätzt (45 Min. Einrichtung, 60 Min. Wohnung, 15 Min. Bank + Fahrt).</div></div>
+  <div class="row" style="margin-top:8px;gap:6px;flex-wrap:nowrap"><input type="number" id="fbkm" value="${lo.km}" min="0" style="flex:0 0 90px;min-width:0" aria-label="Kilometer"><span class="m" style="flex:0 0 auto;min-width:0">km</span><button class="btn g" style="flex:1 1 auto;min-width:0" onclick="addFB()">🚗 Ins Fahrtenbuch</button></div>
+  <button class="btn" onclick="icsLoop()">📅 Alle Besuche in den Kalender (.ics)</button><a class="btn g" target="_blank" href="${gcalAll(sch)}">📅 Als 1 Termin in Google Kalender</a>`})()}</div>`;window._LO=lo;
+  if(TMODE){const inT=TM.filter(c=>PICK.has(c.id)).length;
+   o+=`<div class="card"><h2>🚗 Tour ${z.t} komplett: ${h(tnames[z.t-1]||"")}</h2><div class="hint">Jede Tour wird alle 12 Wochen einmal gefahren – deshalb ist die ganze Tour vorausgewählt (${inT+1} von ${TM.length+1}).${nt?" Termin laut Plan: "+fmt(nt)+".":""} Wer heute nicht passt: „− heute raus“. Dauerhaft ändern: Reiter „Touren“.</div>
+   <button class="btn g" onclick="PICK=new Set(${JSON.stringify(TM.map(c=>c.id))});renderGo()">ganze Tour</button><button class="btn g" onclick="PICK=new Set();renderGo()">nur ${h(z.n.split(" (")[0])}</button>
+   ${TM.map(c=>card(c,dist(p,P(c)))).join("")}</div>`}}
+ let way=[];if(z){const pts=loopPts(z,p);const need=c=>plan(c).kind=="A";way=A.filter(c=>hasP(c)&&c.id!=z.id&&c.a!=z.a&&(!TMODE||(c.t!=z.t&&need(c)))).map(c=>({c,...detour(P(c),pts)})).filter(x=>x.km<=3).sort((a,b)=>a.seg-b.seg||a.km-b.km);
+  const isW=p[1]<=10.0&&!(p[0]>53.65&&p[1]<9.85);
+  o+=`<div class="card"><h2>🛣 Auf dem Rundweg Zuhause ⇄ ${h(z.n.split(" (")[0])}</h2>${isW?`<div class="hint" style="margin-bottom:6px">Anfahrt Hamburg-West: <button class="chip${RW=="a7"?" on":""}" onclick="setRW('a7')">A24 → A1 → A7</button><button class="chip${RW=="stadt"?" on":""}" onclick="setRW('stadt')">durch die Stadt (Horn)</button></div>`:""}
+  <div class="hint">${TMODE?"Nur Klienten aus <b>anderen</b> Touren, bei denen der Kontakt jetzt fällig ist und deren eigene Tour zu spät kommt – max. 3 km Umweg. Alle anderen kommen in ihrer eigenen Tourwoche dran.":"Klienten, für die du höchstens 3 km Umweg fährst (hin oder zurück)."}</div>${way.length?way.map(x=>card(x.c,dist(P(x.c),p)," · "+(x.km<.5?"direkt am Weg":"Umweg ca. "+x.km.toFixed(1).replace(".",",")+" km"))).join(""):'<div class="hint">'+(TMODE?"Niemand aus anderen Touren muss vorgezogen werden.":"Niemand mit weniger als 3 km Umweg.")+'</div>'}</div>`}
+ const nb=A.filter(c=>hasP(c)&&(!z||c.id!=z.id)&&!way.some(x=>x.c===c)&&!(TMODE&&c.t==z.t)).map(c=>[c,dist(p,P(c))]).filter(x=>x[1]<=r).sort((a,b)=>a[1]-b[1]);const want=c=>{const k=plan(c).kind;return TMODE?k=="A":(isDue(c)||k=="U")};const due=nb.filter(x=>want(x[0]));
+ if(!TMODE||due.length)o+=`<div class="card"><h2>💡 Lohnt sich mitzunehmen – im Umkreis ${r} km (${due.length})</h2><div class="hint">Fällig oder letzter Kontakt noch nicht eingetragen · nach Entfernung sortiert</div>${due.length?due.map(x=>card(...x)).join(""):(()=>{const all=A.filter(c=>hasP(c)&&(!z||(c.id!=z.id&&c.a!=z.a))).map(c=>[c,dist(p,P(c))]).sort((a,b)=>a[1]-b[1]).slice(0,3);return '<div class="hint">Im Umkreis von '+r+' km niemand. Die nächsten Klienten (Fahrstrecke geschätzt):</div>'+all.map(x=>card(...x)).join("")})()}</div>`;
+ const rest0=0;o+=`<div class="card"><h2>🏦 Banken & Geldautomaten nahe ${z?h(z.n.split(" (")[0]):"Standort"}</h2><div id="banks"></div></div><div class="card"><h2>📍 Weitere Orte</h2><a class="btn" href="${gm("Apotheke",p)}" target="_blank">💊 Apotheke</a><a class="btn" href="${gm("Post",p)}" target="_blank">✉️ Post</a><a class="btn" href="${gm("Kundenzentrum Bezirksamt",p)}" target="_blank">🏛 Kundenzentrum</a><a class="btn" href="${gm("Parkplatz",p)}" target="_blank">🅿️ Parken</a></div>`;
+ const rest=TMODE?[]:nb.filter(x=>!want(x[0]));if(rest.length)o+=`<div class="card"><h2>Weitere im Umkreis (Kontakt ist aktuell)</h2>${rest.map(x=>card(...x)).join("")}</div>`;
+ $("#out").innerHTML=o;GO=false;loadBanks(p,$("#banks"),new Set([z&&z.bank,...A.filter(c=>PICK.has(c.id)).map(c=>c.bank),...way.map(x=>x.c.bank),...due.map(x=>x[0].bank)]),z)}
+function startTour(t){const r=optimize(t);if(!r.order.length)return;const c=r.order[0].cl[0];$("#ziel").value=c.id;$("#zq").value=c.n+" – Tour "+t;LASTZ=null;here=null;document.querySelector('[data-t="go"]').click();renderGo()}
+function renderTour(){GO=false;let o=`<div class="card hint"><b>−</b> nimmt eine Person dauerhaft aus der Tour, <b>+</b> fügt jemanden hinzu, das Auswahlfeld verschiebt in eine andere Tour. Nur für heute abwählen geht unter „Ich fahre zu …“. Reihenfolge wird bei jeder Änderung automatisch neu berechnet. Wochen ${tourCount()+1}–12: Puffer.</div>`;
+ for(let t=1;t<=tourCount();t++){const r=optimize(t);if(!r.order.length)continue;
+  o+=`<div class="card"><h2>Tour ${t} · Woche ${t} · Mittwoch · ${h(tnames[t-1]||"Tour "+t)}</h2>
+  <div class="hint">${r.pers} Pers. · ${r.order.length} Stopps · vor Ort ca. ${r.hrs.toFixed(1).replace(".",",")} h${r.hrs>MAXH?' <span class="tag due">viel</span>':""} · ca. ${r.km} km gesamt</div>
+  <div class="m" style="margin:6px 0">▶ Zuhause → ${r.inE}</div>
+  ${r.order.map((s,i)=>`<div class="stop"><div class="num">${i+1}</div><div style="flex:1;min-width:0"><div class="m">${h(s.a)}${s.cl.length>1?` · ${s.cl.length} Pers.`:""}</div>${s.cl.map(c=>`<div class="row" style="gap:6px;margin-top:3px;flex-wrap:nowrap"><button class="pm" title="aus Tour nehmen" aria-label="${h(c.n)} aus Tour ${t} nehmen" onclick="moveTo(${c.id},0)">−</button><span class="n" style="flex:1 1 auto;min-width:0">${h(c.n)}</span><select aria-label="Tour für ${h(c.n)}" style="flex:0 0 auto;width:auto;min-width:0;padding:5px;font-size:13px" onchange="moveTo(${c.id},+this.value)">${tourOpts(c.t)}</select></div>`).join("")}</div></div>`).join("")}
+  <div class="row" style="gap:8px;margin:8px 0;flex-wrap:nowrap"><button class="pm plus" aria-label="Person zu Tour ${t} hinzufügen" onclick="const s=this.nextElementSibling;s.hidden=!s.hidden">+</button><select hidden style="flex:1 1 auto;min-width:0" onchange="if(this.value)moveTo(+this.value,${t})"><option value="">Person zu Tour ${t} hinzufügen …</option>${act().filter(c=>c.t!=t).sort((a,b)=>(a.t?1:0)-(b.t?1:0)||a.n.localeCompare(b.n)).map(c=>`<option value="${c.id}">${h(c.n)} – ${c.t?"jetzt Tour "+c.t:"ohne Tour"}${hasP(c)?"":" (Adresse fehlt)"}</option>`).join("")}</select></div>
+  <div class="m" style="margin:6px 0">◀ ${r.outE} → Zuhause</div>
+  <button class="btn" onclick="startTour(${t})">▶ Tour planen (Banken, Abwählen)</button><a class="btn g" target="_blank" href="https://www.google.com/maps/dir/${enc(HOMEA)}/${r.order.map(s=>enc(s.a)).join("/")}/${enc(HOMEA)}">🗺 Tour in Google Maps</a>
+  <button class="btn g" onclick="renTour(${t})">✏️ Name</button></div>`}
+ $("#tour").innerHTML=o}
+function renTour(t){const v=prompt("Name der Tour "+t+":",tnames[t-1]||"");if(v){tnames[t-1]=v;save();renderAll()}}
+function renderDue(){GO=false;const A=act().map(c=>[c,plan(c)]);
+ const calls=A.filter(x=>x[1].kind=="A"||x[1].call).sort((a,b)=>a[1].dd-b[1].dd),vis=A.filter(x=>x[1].kind=="B"&&x[1].dd<=21).sort((a,b)=>a[1].nt-b[1].nt);
+ const nt=[...Array(tourCount())].map((_,i)=>[i+1,nextTour(i+1)]).filter(x=>x[1]).sort((a,b)=>a[1]-b[1])[0];const off=act().filter(c=>!c.t);const unk=A.filter(x=>x[1].kind=="U");
+ $("#due").innerHTML=`<h2 style="margin:18px 4px 10px">Zu tun</h2><div class="card hint">Ziel: 4 Kontakte pro Jahr (alle ~3 Monate). Persönlich davon: immer Hausbesuch = 4, 2×B+2×A = 2, 1×B+3×A = 1. Liegt keine passende Tour im Zeitfenster, erinnert die App ans Anrufen.${START?"":" <b>Unter Stammdaten → Tour-Kalender den Start-Mittwoch eintragen, dann werden Touren eingeplant.</b>"}</div>
+ ${nt?`<div class="card"><h2>🚗 Nächste Tour: Tour ${nt[0]} am ${fmt(nt[1])}</h2><div class="hint">${h(tnames[nt[0]-1]||"")}</div></div>`:""}
+ ${(()=>{const W=[];C.forEach(c=>(LOG[c.id]||[]).forEach((e,i)=>{if(e.wv&&!e.done)W.push([c,e,i])}));W.sort((a,b)=>(a[1].wvd||"9")<(b[1].wvd||"9")?-1:1);
+  return W.length?`<div class="card"><h2>📌 Wiedervorlagen (${W.length})</h2>${W.map(([c,e,i])=>`<div class="c"><div style="min-width:0"><div class="n">${h(e.wv)}</div><div class="m">${h(c.n)} · aus Kontakt vom ${dmy(e.d)}${e.wvd?` · <b style="color:${e.wvd<isoToday()?"var(--warn)":"inherit"}">bis ${dmy(e.wvd)}</b>`:""}</div></div><div style="white-space:nowrap"><button class="btn g" onclick="wvDone(${c.id},${i})">✓ erledigt</button><button class="btn g" onclick="openHist(${c.id})">🗂</button></div></div>`).join("")}</div>`:""})()}
+ ${SP.length?`<div class="card"><h2>☕ Sprechstunden</h2>${SP.slice().sort((a,b)=>a.d<b.d?1:-1).slice(0,5).map(s=>`<div style="padding:6px 0;border-top:1px solid var(--line)"><div class="n">${s.d==isoToday()?"Heute":dmy(s.d)} · ${h(s.ort.replace(/^Mobiles Büro[^:]*:\s*/,""))} · ${s.von}–${s.bis}</div>${s.ids.map(id=>C.find(c=>c.id==id)).filter(Boolean).map(c=>`<button class="btn g" onclick="openHist(${c.id})">🗂 ${h(c.n.split(" (")[0])}</button>`).join("")}${s.d==isoToday()?`<button class="btn g" onclick="editSP(${s.id})">+ weitere Person</button>`:""}</div>`).join("")}<button class="btn" onclick="openSP()">☕ Sprechstunde erfassen</button></div>`:""}
+ ${(()=>{const V=A.filter(x=>x[1].kind=="V").sort((a,b)=>a[1].dd-b[1].dd);return V.length?`<div class="card"><h2>🚗 Besuch nötig – nur persönlich (${V.length})</h2><div class="hint">Die eigene Tour kommt zu spät: Einzelbesuch einplanen, z. B. Donnerstagnachmittag oder mit einer anderen Tour (unter „Ich fahre zu …“ → „Nur auf dem Weg“).</div>${V.map(x=>card(x[0])).join("")}</div>`:""})()}
+ <div class="card"><h2>📞 Jetzt anrufen (${calls.length})</h2><div class="hint">Anruftag: Freitag.</div>${calls.length?`<a class="btn" target="_blank" href="${friCal(calls.map(x=>x[0]))}">📅 Anrufliste in Kalender (${fmt(nextFri())})</a>`:""}${calls.map(x=>card(x[0])).join("")||'<div class="hint">Keine Anrufe fällig.</div>'}</div>
+ <div class="card"><h2>🚗 Besuche bei den nächsten Touren (${vis.length})</h2>${vis.map(x=>card(x[0])).join("")||'<div class="hint">Keine.</div>'}</div>
+ ${unk.length?`<div class="card"><h2>❔ Letzter Kontakt fehlt (${unk.length})</h2><div class="hint">Einmalig nachtragen – danach berechnet die App alles selbst.</div>${unk.map(x=>card(x[0])).join("")}</div>`:""}
+ ${off.length?`<div class="card"><h2>🏢 Ohne Tour – mobiles Büro / Telefon (${off.length})</h2>${off.map(c=>card(c)).join("")}</div>`:""}`}
+function renderData(){const q=($("#srch").value||"").toLowerCase();const A=act().filter(c=>(c.n+c.a).toLowerCase().includes(q)).sort((a,b)=>a.t-b.t||a.n.localeCompare(b.n));$("#cnt").textContent=act().length;
+ $("#list").innerHTML=A.map(c=>`<div class="c"><div style="min-width:0;flex:1"><div class="n" style="cursor:pointer" onclick="togOpen(${c.id})">${OPEN.has(c.id)?"▾":"▸"} ${h(c.n)} <span class="m">· ${(LOG[c.id]||[]).length} Termin${(LOG[c.id]||[]).length==1?"":"e"}</span></div>${OPEN.has(c.id)?histBlock(c):""}<div class="m">${h(c.a)} · ${c.t?"Tour "+c.t:"ohne Tour"} · ${RT[c.r][0]}${!c.t||c.geo?"":" · ⚠ Lage geschätzt"}</div></div>
+ <div style="white-space:nowrap"><button class="btn g" onclick="fillForm(C.find(x=>x.id==${c.id}))">✏️</button><button class="btn w" onclick="archive(${c.id})">Archiv</button></div></div>`).join("");
+ const sel=$("#f_t"),v=sel.value;sel.innerHTML='<option value="auto">automatisch zuordnen</option><option value="0">ohne Tour (mobiles Büro / Telefon)</option>'+[...Array(tourCount())].map((_,i)=>`<option value="${i+1}">Tour ${i+1} – ${h(tnames[i]||"")}</option>`).join("");sel.value=v||"auto"}
+function renderArchiv(){const L=C.filter(c=>!c.on);$("#archiv").innerHTML=`<div class="card"><h2>Archiv (${L.length})</h2>${L.length?L.map(c=>`<div class="c"><div><div class="n">${h(c.n)}</div><div class="m">${h(c.a)} · ${h(c.why||"")} · seit ${dmy(c.end||"")}</div></div><button class="btn g" onclick="restore(${c.id})">wieder aktiv</button></div>`).join(""):'<div class="hint">Noch niemand archiviert.</div>'}</div>`}
+const ini=n=>n.split(" (")[0].split(/[\s-]+/).filter(Boolean).map(w=>w[0].toUpperCase()+".").join("");
+function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+const csv=rows=>"﻿"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";")).join("\r\n");
+function pRange(){return[$("#p_von").value||"0000",$("#p_bis").value||"9999"]}
+function pRows(){const [a,b]=pRange(),who=$("#p_kl").value;const R=[];C.forEach(c=>{if(who&&c.id!=+who)return;(LOG[c.id]||[]).forEach(e=>{if(e.d>=a&&e.d<=b)R.push([c,e])})});return R.sort((x,y)=>x[1].d<y[1].d?-1:x[1].d>y[1].d?1:(x[1].von||"")<(y[1].von||"")?-1:1)}
+function expKontakte(){const an=$("#p_an").checked;const R=pRows();if(!R.length){flash("Im gewählten Zeitraum gibt es keine Kontakte.");return}
+ const head=an?["Datum","Beginn","Ende","Dauer (Min.)","Klient (Initialen)","Tour","Art"]:["Datum","Beginn","Ende","Dauer (Min.)","Klient","Tour","Art","Anwesend","Besprochen","Wiedervorlage","WV bis","WV erledigt"];
+ const rows=R.map(([c,e])=>{const base=[dmy(e.d),e.von||"",e.bis||"",mins(e),an?ini(c.n):c.n,c.t||"–",e.art||(e.typ=="A"?"Anruf":"Besuch")];return an?base:[...base,e.anw||"",e.txt||"",e.wv||"",dmy(e.wvd),e.wv?(e.done?"ja":"nein"):""]});
+ dl(`Kontakte_${pRange().join("_bis_").replace(/0000_bis_|_bis_9999/g,"")}${an?"_anonym":""}.csv`,csv([head,...rows]),"text/csv");flash(`${rows.length} Kontakte exportiert – Datei liegt in „Downloads“, mit Excel öffnen.`)}
+function expJahr(){const an=$("#p_an").checked;const [a,b]=pRange();const who=$("#p_kl").value;
+ const rows=C.filter(c=>(!who||c.id==+who)&&(c.on||(LOG[c.id]||[]).length)).map(c=>{const L=(LOG[c.id]||[]).filter(e=>e.d>=a&&e.d<=b);const cnt=k=>L.filter(e=>(e.art||(e.typ=="A"?"Anruf":"Hausbesuch"))==k).length;
+  const pers=L.filter(e=>e.typ=="B").length,last=L.filter(e=>e.typ=="B").map(e=>e.d).sort().pop(),tot=L.reduce((s,e)=>s+(+mins(e)||0),0);
+  return[an?ini(c.n):c.n,c.t||"–",pers,cnt("Hausbesuch"),cnt("Besuch Einrichtung"),cnt("Mobiles Büro"),cnt("Anruf"),cnt("Termin mit Dritten"),dmy(last),tot||"",c.on?"":"archiviert: "+(c.why||"")]}).sort((x,y)=>String(x[0]).localeCompare(y[0]));
+ dl(`Jahresuebersicht_Kontakte${an?"_anonym":""}.csv`,csv([["Klient","Tour","Persönliche Kontakte gesamt","Hausbesuche","Besuche Einrichtung","Mobiles Büro","Anrufe","Termine mit Dritten","Letzter persönlicher Kontakt","Dauer gesamt (Min.)","Status"],...rows]),"text/csv");flash("Jahresübersicht exportiert – Grundlage für den Jahresbericht (Kontakte).")}
+function expFB(){const an=$("#p_an").checked;const [a,b]=pRange();const L=FB.filter(f=>f.d>=a&&f.d<=b).sort((x,y)=>x.d<y.d?-1:1);if(!L.length){flash("Im gewählten Zeitraum gibt es keine Fahrten.");return}
+ const rows=L.map(f=>[dmy(f.d),f.ab||"",f.an||"",fbH(f)?hrsTxt(fbH(f)):"",H8(fbH(f))?"‼️ JA":"nein",HOMEA,an?f.stops.map(s=>s.startsWith("Bank:")?"Bank":ini(s)).join(" – "):f.stops.join(" – "),an?"":f.adr.join(" | "),HOMEA,f.km,f.zweck]);
+ const sum=L.reduce((s,f)=>s+(+f.km||0),0);const n8=L.filter(f=>H8(fbH(f))).length;rows.push(["","","","",`${n8} Tage > 8 Std.`,"","","","Summe",sum,""]);
+ dl(`Fahrtenbuch${an?"_anonym":""}.csv`,csv([["Datum","Abfahrt","Rückkehr","Abwesenheit (Std.)","Über 8 Std. außer Haus","Start","Besuchte Stationen","Adressen","Ziel","km","Zweck"],...rows]),"text/csv");flash(`Fahrtenbuch exportiert: ${L.length} Fahrten, ${sum} km, ${n8} Tage über 8 Std. außer Haus.`)}
+function delFB(id){FB=FB.filter(f=>f.id!=id);save();renderProt()}
+function editFB(id){const f=FB.find(x=>x.id==id);$("#dlgc").innerHTML=`<h2>Fahrt am ${dmy(f.d)}</h2><div class="row"><div><label for="f_ab">Abfahrt Zuhause</label><input type="time" id="f_ab" value="${f.ab||""}"></div><div><label for="f_an">Rückkehr</label><input type="time" id="f_an" value="${f.an||""}"></div><div><label for="f_km">km (Tacho)</label><input type="number" id="f_km" value="${f.km}"></div></div>
+ <div style="margin-top:10px"><button class="btn" onclick="saveFB(${id})">Speichern</button><button class="btn g" onclick="closeDlg()">Abbrechen</button></div>`;$("#dlg").hidden=false}
+function saveFB(id){const f=FB.find(x=>x.id==id);f.ab=$("#f_ab").value;f.an=$("#f_an").value;const n=+String($("#f_km").value).replace(",",".");if(n>=0)f.km=n;save();closeDlg();renderProt();flash(H8(fbH(f))?`‼️ ${dmy(f.d)}: über 8 Std. außer Haus (${hrsTxt(fbH(f))} Std.).`:"Fahrt gespeichert.")}
+function pdfBericht(){const [a,b]=pRange(),who=$("#p_kl").value;const list=C.filter(c=>(!who||c.id==+who)&&(LOG[c.id]||[]).some(e=>e.d>=a&&e.d<=b)).sort((x,y)=>x.n.localeCompare(y.n));
+ if(!list.length){flash("Für Zeitraum/Klient gibt es keine Kontakte.");return}
+ $("#pr").innerHTML=list.map((c,i)=>{const L=(LOG[c.id]||[]).filter(e=>e.d>=a&&e.d<=b).sort((x,y)=>x.d<y.d?-1:1);const cnt=k=>L.filter(e=>(e.art||(e.typ=="A"?"Anruf":"Hausbesuch"))==k).length;const tot=L.reduce((s,e)=>s+(+mins(e)||0),0);
+  return `<div class="${i?"pb":""}"><h1>Kontakte im Berichtszeitraum – ${h(c.n.split(" (")[0])}</h1><div class="sm">Zeitraum ${dmy(a)} – ${dmy(b)} · Wohnsituation: ${c.e=="E"?"Einrichtung ("+h((c.n.match(/\((.*)\)/)||[,""])[1])+")":"eigene Wohnung"} · ${h(c.a)}</div>
+  <h2>Übersicht</h2><table><tr><th>Persönliche Kontakte</th><th>Hausbesuche</th><th>Besuche Einrichtung</th><th>Mobiles Büro</th><th>Telefonate</th><th>Termine mit Dritten</th><th>Dauer gesamt</th></tr>
+  <tr><td>${L.filter(e=>e.typ=="B").length}</td><td>${cnt("Hausbesuch")}</td><td>${cnt("Besuch Einrichtung")}</td><td>${cnt("Mobiles Büro")}</td><td>${cnt("Anruf")}</td><td>${cnt("Termin mit Dritten")}</td><td>${tot?Math.floor(tot/60)+" Std. "+tot%60+" Min.":"–"}</td></tr></table>
+  <h2>Einzelne Kontakte</h2><table><tr><th style="width:16%">Datum / Zeit</th><th style="width:16%">Art</th><th>Inhalt / besprochen</th></tr>
+  ${L.map(e=>`<tr><td>${dmy(e.d)}${e.von?"<br>"+e.von+(e.bis?"–"+e.bis:""):""}</td><td>${h(e.art||(e.typ=="A"?"Anruf":"Besuch"))}${e.anw?`<div class="sm">Anwesend: ${h(e.anw)}</div>`:""}</td><td style="white-space:pre-wrap">${h(e.txt||"")}${e.wv?`<div class="sm">Erledigung: ${h(e.wv)}${e.wvd?" (bis "+dmy(e.wvd)+")":""}${e.done?" – erledigt":""}</div>`:""}</td></tr>`).join("")}</table>
+  <div class="sm" style="margin-top:8pt">Erstellt am ${dmy(isoToday())} ${(_H&&_H.firma)||""?" · "+((_H&&_H.firma)||""):""}</div></div>`}).join("");
+ document.body.classList.add("prm");const off=()=>{document.body.classList.remove("prm");window.removeEventListener("afterprint",off)};window.addEventListener("afterprint",off);setTimeout(()=>window.print(),50)}
+function renderProt(){const y=new Date().getFullYear();const keep=id=>($("#"+id)||{}).value;
+ const pv=keep("p_von")||`${y}-01-01`,pb=keep("p_bis")||`${y}-12-31`,pk=keep("p_kl")||"",pa=($("#p_an")||{}).checked||false;
+ const all=[];C.forEach(c=>(LOG[c.id]||[]).forEach(e=>all.push([c,e])));all.sort((a,b)=>a[1].d<b[1].d?1:-1);
+ $("#prot").innerHTML=`<div class="card"><h2>Export für Excel</h2>
+ <div class="row"><div><label for="p_von">von</label><input type="date" id="p_von" value="${pv}"></div><div><label for="p_bis">bis</label><input type="date" id="p_bis" value="${pb}"></div></div>
+ <label for="p_kl">Klient</label><select id="p_kl"><option value="">alle Klienten</option>${C.slice().sort((a,b)=>a.n.localeCompare(b.n)).map(c=>`<option value="${c.id}"${pk==c.id?" selected":""}>${h(c.n)}${c.on?"":" (Archiv)"}</option>`).join("")}</select>
+ <label style="display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--ink);font-size:14px"><input type="checkbox" id="p_an" style="width:auto"${pa?" checked":""}> anonymisiert (Initialen, ohne Notizen und Adressen)</label>
+ <div style="margin-top:8px"><button class="btn" onclick="expKontakte()">📋 Kontaktliste</button><button class="btn" onclick="expJahr()">📊 Übersicht je Klient (Jahresbericht)</button><button class="btn" onclick="expFB()">🚗 Fahrtenbuch</button><button class="btn" onclick="pdfBericht()">📄 Jahresbericht-Inhalte (PDF)</button></div>
+ <div class="hint">PDF: Im Druckfenster als Drucker „Als PDF speichern“ wählen. Eine Seite je Klient mit Übersicht und allen Kontakten – zum Übertragen in deine Betreuungssoftware.</div>
+ <div class="hint" style="margin-top:6px">Dateien landen im Ordner „Downloads“ und öffnen sich mit Excel. Nicht anonymisierte Dateien enthalten Klientendaten: per USB-Kabel übertragen, nicht per Messenger oder privater Cloud.</div></div>
+ <div class="card"><h2>🚗 Fahrtenbuch (${FB.length} Fahrten · ${FB.reduce((s,f)=>s+(+f.km||0),0)} km)</h2><div class="hint">Fahrten trägst du unter „Ich fahre zu …“ → Rundweg → „Ins Fahrtenbuch“ ein. km hier auf Tachowert korrigierbar.</div>
+ ${FB.slice().sort((a,b)=>a.d<b.d?1:-1).slice(0,30).map(f=>`<div class="c"><div style="min-width:0">${H8(fbH(f))?`<div class="big8">‼️ ÜBER 8 STD. AUSSER HAUS (${hrsTxt(fbH(f))} Std.)</div>`:""}<div class="n">${dmy(f.d)} · ${f.km} km · ${f.ab||"?"}–${f.an||"?"} Uhr</div><div class="m">${h(f.stops.join(" – "))}</div></div><div style="white-space:nowrap"><button class="btn g" onclick="editFB(${f.id})">✏️</button><button class="btn w" onclick="delFB(${f.id})">✕</button></div></div>`).join("")||'<div class="hint">Noch keine Fahrten.</div>'}</div>
+ <div class="card"><h2>☕ Sprechstunden (${SP.length})</h2><button class="btn" onclick="openSP()">+ Sprechstunde erfassen</button>${SP.slice().sort((a,b)=>a.d<b.d?1:-1).slice(0,15).map(s=>`<div class="c"><div style="min-width:0"><div class="n">${dmy(s.d)} · ${h(s.ort)} · ${s.von}–${s.bis}</div><div class="m">${s.ids.length} Klient${s.ids.length==1?"":"en"}: ${h(s.ids.map(id=>(C.find(c=>c.id==id)||{n:"?"}).n.split(" (")[0]).join(", "))}${s.note?" · "+h(s.note):""}</div></div><button class="btn w" onclick="delSP(${s.id})">✕</button></div>`).join("")}</div>
+ <div class="card"><h2>Letzte Kontakte</h2>${all.slice(0,25).map(([c,e])=>`<div class="c"><div style="min-width:0"><div class="n">${dmy(e.d)} · ${h(c.n)}</div><div class="m">${h(e.art||(e.typ=="A"?"Anruf":"Besuch"))}${mins(e)?" · "+mins(e)+" Min.":""}${e.txt?" · "+h(e.txt.slice(0,80))+(e.txt.length>80?"…":""):""}</div></div><button class="btn g" onclick="openHist(${c.id})">🗂</button></div>`).join("")||'<div class="hint">Noch keine Kontakte erfasst.</div>'}</div>`}
+function renderHeute(){const d=today(),wd=d.getDay(),A=act().map(c=>[c,plan(c)]);const sch=schedTours().find(x=>isoD(x.d)==isoD(d));const nx=schedTours().find(x=>x.d>d&&x.t);
+ const calls=A.filter(x=>x[1].kind=="A"||x[1].call);const VV=A.filter(x=>x[1].kind=="V");const W=[];C.forEach(c=>(LOG[c.id]||[]).forEach((e,i)=>{if(e.wv&&!e.done&&(!e.wvd||e.wvd<=isoD(addD(d,7))))W.push([c,e,i])}));W.sort((a,b)=>(a[1].wvd||"0")<(b[1].wvd||"0")?-1:1);
+ const runs=Object.keys(RUN).map(id=>C.find(c=>c.id==+id)).filter(Boolean);const hol=holidays(d.getFullYear())[isoD(d)];const blk=BLK.find(x=>isoD(d)>=x.von&&isoD(d)<=x.bis);
+ let o=`<div class="card"><h2 style="font-family:inherit;text-transform:none;letter-spacing:0;font-size:22px;color:var(--ink);margin:0 0 2px">${d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})}</h2><div class="hint">${hol?"Feiertag: "+hol:blk?h(blk.grund):sch&&sch.t?"Tourtag":wd==3?"Mittwoch – heute keine Tour":wd==5?"Anruftag":wd==4?"Telefonische Sprechzeit"+(SZ["4"]?" "+SZ["4"]+" Uhr":"")+" · nachmittags Puffer für Nottermine":wd==1?"Telefonische Sprechzeit"+(SZ["1"]?" "+SZ["1"]+" Uhr":""):""}</div></div>`;
+ const spT=SP.filter(s=>s.d==isoD(d));if(spT.length)o+=`<div class="card"><h2>☕ Sprechstunde heute</h2>${spT.map(s=>`<div class="m" style="margin-bottom:4px">${h(s.ort)} · ${s.von}–${s.bis}${s.note?" · "+h(s.note):""}</div>${s.ids.map(id=>C.find(c=>c.id==id)).filter(Boolean).map(c=>`<div class="c"><div class="n">${h(c.n.split(" (")[0])}</div><button class="btn g" onclick="openHist(${c.id})">🗂 Gespräch eintragen / ändern</button></div>`).join("")}<button class="btn g" onclick="editSP(${s.id})">+ weitere Person</button>`).join("")}</div>`;
+ if(runs.length)o+=`<div class="card"><h2>⏱ Läuft gerade</h2>${runs.map(c=>card(c)).join("")}</div>`;
+ if(sch&&sch.t){const r=optimize(sch.t);o+=`<div class="card"><h2>🚗 Heute: Tour ${sch.t} – ${h(tnames[sch.t-1]||"")}</h2><div class="hint">${r.pers} Pers. · vor Ort ca. ${r.hrs.toFixed(1).replace(".",",")} h</div>${r.order.map((s,i)=>`<div class="stop"><div class="num">${i+1}</div><div><div class="n">${s.cl.map(c=>h(c.n.split(" (")[0])).join(", ")}</div><div class="m">${h(s.a)}</div></div></div>`).join("")}<button class="btn" onclick="startTour(${sch.t})">▶ Tour starten (Rundweg, Banken, Zeiten)</button></div>`}
+ else if(nx)o+=`<div class="card"><h2>🚗 Nächste Tour: Tour ${nx.t} am ${fmt(nx.d)}</h2><div class="hint">${h(tnames[nx.t-1]||"")}</div><button class="btn g" onclick="startTour(${nx.t})">ansehen</button></div>`;
+ else if(!START)o+=`<div class="card hint">Start-Mittwoch fehlt: Stammdaten → Tour-Kalender.</div>`;
+ o+=`<div class="card"><h2>📌 Wiedervorlagen bis ${fmt(addD(d,7))} (${W.length})</h2>${W.map(([c,e,i])=>`<div class="c"><div style="min-width:0"><div class="n">${h(e.wv)}</div><div class="m">${h(c.n)}${e.wvd?` · <b style="color:${e.wvd<isoD(d)?"var(--warn)":"inherit"}">bis ${dmy(e.wvd)}</b>`:""}</div></div><button class="btn g" onclick="wvDone(${c.id},${i})">✓</button></div>`).join("")||'<div class="hint">Nichts fällig.</div>'}</div>`;
+ o+=`<div class="card"><h2>📞 Anrufe fällig (${calls.length})${wd==5?" – heute ist Anruftag":""}</h2>${calls.length?(wd==5?calls.map(x=>card(x[0])).join(""):`<div class="hint">${h(calls.slice(0,8).map(x=>x[0].n.split(" (")[0]).join(", "))}${calls.length>8?" …":""}</div><a class="btn" target="_blank" href="${friCal(calls.map(x=>x[0]))}">📅 In Kalender für ${fmt(nextFri())}</a><button class="btn g" onclick="document.querySelector('[data-t=due]').click()">Liste öffnen</button>`):'<div class="hint">Keine Anrufe fällig.</div>'}${(()=>{const P=preCalls();return P.length?`<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">📞 Kannst du schon vorziehen (${P.length})</summary><div class="hint" style="margin:4px 0 6px">Telefonisch erreichbar, nächste Tour erst in über 6 Wochen – ein Anruf jetzt sichert das Quartal.</div>${P.map(([c,p])=>`<div class="c"><div style="min-width:0"><div class="n">${h(c.n.split(" (")[0])}</div><div class="m">Kontakt fällig bis ${fmt(addD(today(),p.dd))}${p.nt?" · Tour "+c.t+" am "+fmt(p.nt):" · ohne Tour"}</div></div><button class="btn g" onclick="openHist(${c.id})">📞</button></div>`).join("")}<a class="btn g" target="_blank" href="${friCal([...calls.map(x=>x[0]),...P.map(x=>x[0])])}">📅 Alle in Kalender für ${fmt(nextFri())}</a></details>`:""})()}</div>`;
+ if(VV.length)o+=`<div class="card"><h2>🚗 Besuch nötig – nur persönlich (${VV.length})</h2><div class="hint">${h(VV.map(x=>x[0].n.split(" (")[0]).join(", "))}</div><button class="btn g" onclick="document.querySelector('[data-t=due]').click()">Liste öffnen</button></div>`;
+ o+=`<div class="card"><h2>📋 Wochenplanung</h2><div class="hint">Kopiert eine Übersicht (Namen, Fälligkeiten, Wiedervorlagen – ohne Notizen) zum Einfügen im Chat mit Claude.</div><button class="btn" onclick="copyWeek()">📋 Wochenplanung für Claude kopieren</button><textarea id="wkt" rows="6" style="margin-top:8px" hidden readonly></textarea></div>`;
+ o+=`<div class="card"><h2>Schnellzugriff</h2><button class="btn" onclick="openSP()">☕ Sprechstunde erfassen</button><button class="btn g" onclick="document.querySelector('[data-t=go]').click();$('#zq').focus()">🚗 Ich fahre zu …</button><button class="btn g" onclick="document.querySelector('[data-t=prot]').click()">📄 Protokoll & Export</button></div>`;
+ const unk=A.filter(x=>x[1].kind=="U").length;if(unk)o+=`<div class="card hint">Letzter Kontakt fehlt noch bei <b>${unk} von ${act().length}</b> Klienten – bitte nachtragen (Reiter „Kontakte“ → „Letzter Kontakt fehlt“).</div>`;
+ $("#heute").innerHTML=o}
+function weekText(){const d=today(),A=act().map(c=>[c,plan(c)]);const nm=c=>c.n.replace(/ \((?!Ehe)[^)]*\)$/,"");const nxt=schedTours().filter(x=>x.d>=d&&x.t).slice(0,2);
+ const L=[`Wochenplanung – Stand ${dmy(isoD(d))} (Tour-App Version ${UPD.v}, ${act().length} aktive Klienten)`];
+ nxt.forEach(x=>{const r=optimize(x.t);L.push(`Nächste Tour: Tour ${x.t} am ${dmy(isoD(x.d))} – ${tnames[x.t-1]||""}: ${r.order.map(s=>s.cl.map(nm).join("+")).join(", ")}`)});
+ const g=(k,t)=>{const X=A.filter(x=>x[1].kind==k);if(X.length)L.push(`${t} (${X.length}): `+X.map(x=>nm(x[0])+(x[0].t?" [T"+x[0].t+"]":" [Büro]")+(x[1].nt?" Tour "+fmt(x[1].nt):"")).join("; "))};
+ g("V","Besuch nötig, nicht telefonisch erreichbar");g("A","Anrufe fällig");g("B","Besuche über Tour geplant");g("U","Letzter Kontakt unbekannt");
+ const W=[];C.forEach(c=>(LOG[c.id]||[]).forEach(e=>{if(e.wv&&!e.done)W.push(`${nm(c)}: ${e.wv}${e.wvd?" bis "+dmy(e.wvd):""}`)}));if(W.length)L.push("Wiedervorlagen: "+W.join("; "));
+ const off=act().filter(c=>!c.t);if(off.length)L.push("Ohne Tour (Sprechstunde/Telefon): "+off.map(c=>nm(c)+" – "+plan(c).txt.replace(/<[^>]+>/g,"")).join("; "));
+ const wk=WK.filter(x=>x.d>=isoD(monday(0))&&x.d<=isoD(addD(monday(1),4)));if(wk.length)L.push("Eigene Termine: "+wk.map(x=>dmy(x.d)+(x.v?" "+x.v:"")+" "+x.t).join("; "));
+ if(BLK.length)L.push("Gesperrt/Urlaub: "+BLK.map(b=>dmy(b.von)+"–"+dmy(b.bis)+" "+b.grund).join("; "));return L.join("\n")}
+function copyWeek(){const s=weekText();const ta=$("#wkt");ta.value=s;ta.hidden=false;const ok=()=>flash("Kopiert – jetzt im Chat mit Claude einfügen.");
+ if(navigator.clipboard)navigator.clipboard.writeText(s).then(ok,()=>{ta.select();flash("Bitte den Text im Feld markieren und kopieren.")});else{ta.select();flash("Bitte den Text im Feld markieren und kopieren.")}}
+function monday(off){const d=today();const k=(d.getDay()+6)%7;return addD(d,-k+7*off)}
+function kw(d){const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=x.getUTCDay()||7;x.setUTCDate(x.getUTCDate()+4-n);const y=new Date(Date.UTC(x.getUTCFullYear(),0,1));return Math.ceil(((x-y)/864e5+1)/7)}
+function wkAdd(ds){$("#dlgc").innerHTML=`<h2>Termin am ${dmy(ds)}</h2><label for="w_t">Was?</label><input id="w_t" placeholder="z. B. Nachholbesuch, Amtsgericht …">
+ <div class="row"><div><label for="w_v">von</label><input type="time" id="w_v"></div><div><label for="w_c">Klient (optional)</label><select id="w_c"><option value="">–</option>${act().slice().sort((a,b)=>a.n.localeCompare(b.n)).map(c=>`<option value="${c.id}">${h(c.n)}</option>`).join("")}</select></div></div>
+ <div style="margin-top:10px"><button class="btn" onclick="wkSave('${ds}')">Speichern</button><button class="btn g" onclick="closeDlg()">Abbrechen</button></div>`;$("#dlg").hidden=false}
+function wkSave(ds){const tx=$("#w_t").value.trim(),cid=+$("#w_c").value||0;if(!tx&&!cid){flash("Bitte eintragen, was geplant ist.");return}const c=C.find(x=>x.id==cid);
+ WK.push({id:Date.now(),d:ds,v:$("#w_v").value,t:tx||("Besuch "+c.n.split(" (")[0]),cid});save();closeDlg();renderAll()}
+function wkDel(id){WK=WK.filter(x=>x.id!=id);save();renderAll()}
+function wkPlan(cid,ds){const c=C.find(x=>x.id==cid);WK.push({id:Date.now(),d:ds,v:"",t:"Nachholbesuch "+c.n.split(" (")[0],cid});save();renderAll();flash(`${h(c.n.split(" (")[0])} für ${dmy(ds)} eingeplant.`)}
+function gTerm(t,ds,v,dur,det){const [Y,M,D]=ds.split("-").map(Number);const[hh,mm]=(v||"09:00").split(":").map(Number);const s=new Date(Y,M-1,D,hh,mm),e=new Date(s.getTime()+(dur||60)*6e4);
+ return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${enc(t)}&dates=${gd(s)}/${gd(e)}&ctz=Europe/Berlin&details=${enc(det||"")}`}
+function renderWoche(){const mo=monday(WOFF),days=[0,1,2,3,4].map(i=>addD(mo,i)),A=act().map(c=>[c,plan(c)]),nm=c=>c.n.replace(/ \((?!Ehe)[^)]*\)$/,"");const fr=isoD(days[4]),mon=isoD(mo);
+ const cafe=PL.filter(p=>/café may|cafe may/i.test(p.n));const nearCafe=c=>hasP(c)&&cafe.some(p=>dist([p.la,p.lo],P(c))<=4);
+ let o=`<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button class="btn g" onclick="WOFF--;renderWoche()">◀</button><div style="text-align:center"><div class="n" style="font-size:17px">KW ${kw(mo)}</div><div class="m">${dmy(isoD(mo))} – ${dmy(fr)}</div></div><button class="btn g" onclick="WOFF++;renderWoche()">▶</button></div>`;
+ o+=`<div class="hint" style="margin:-4px 4px 10px">Kalenderstand: ${CAL.at?dmy(CAL.at):"noch nicht abgeglichen"} – Claude gleicht bei jeder Wochenplanung neu ab.</div>`;
+ if(WOFF)o+=`<div style="text-align:center;margin:-4px 0 8px"><button class="btn g" onclick="WOFF=0;renderWoche()">zur aktuellen Woche</button></div>`;
+ days.forEach((d,i)=>{const ds=isoD(d),hol=holidays(d.getFullYear())[ds],blk=BLK.find(x=>ds>=x.von&&ds<=x.bis),isT=ds==isoToday();
+  const items=WK.filter(x=>x.d==ds).sort((a,b)=>(a.v||"99")<(b.v||"99")?-1:1);const done=[];C.forEach(c=>(LOG[c.id]||[]).forEach(e=>{if(e.d==ds)done.push([c,e])}));
+  let b="";
+  if(hol||blk)b+=`<div class="big8" style="${blk&&!hol?"background:#f6bf26;color:#3a2d00;border-color:#d9a400":"background:var(--mut);border-color:var(--mut)"}">${hol?"Feiertag: "+h(hol):"🌴 "+h(blk.grund)}</div>`;
+  else{
+   if(i==0||i==3)b+=`<div class="n">📞 Telefonische Sprechzeit${SZ[String(i==0?1:4)]?" "+h(SZ[String(i==0?1:4)])+" Uhr":""}</div><div class="m">Erreichbar für Klienten, Einrichtungen und Ämter${i==3?" · danach Puffer für Nottermine":""}</div>`;
+   if(i==1){const sp=SP.filter(s=>s.d==ds);const inv=A.filter(([c,p])=>!c.noPhone&&c.e!="E"&&((!c.t&&(p.kind=="A"||p.kind=="U"))||(c.t&&nearCafe(c)&&p.kind=="A")));
+    b+=`<div class="n">☕ Sprechstunde auf Anfrage</div>${sp.length?sp.map(s=>`<div class="m">✓ ${h(s.ort)} ${s.von}–${s.bis}: ${h(s.ids.map(id=>nm(C.find(c=>c.id==id)||{n:"?"})).join(", "))}</div>`).join(""):""}
+    ${inv.length?`<div class="m">Einladen: ${h(inv.map(x=>nm(x[0])).join(", "))}</div>`:'<div class="m">Niemand dringend einzuladen.</div>'}`}
+   if(i==2){const st=schedTours().find(x=>isoD(x.d)==ds);if(st&&st.t){const r=optimize(st.t);const L=loopOrder({n:"",a:"",t:st.t},r.order[0].p);
+     b+=`<div class="n">🚗 Tour ${st.t} – ${h(tnames[st.t-1]||"")}</div><div class="m">${h(r.order.map(s=>s.cl.map(nm).join(" + ")).join(" → "))}</div><div class="m">${r.pers} Pers. · vor Ort ca. ${r.hrs.toFixed(1).replace(".",",")} h · ca. ${r.km} km</div><button class="btn g" onclick="startTour(${st.t})">▶ planen</button><a class="btn g" target="_blank" href="${gTerm("Tour "+st.t+": "+(tnames[st.t-1]||""),ds,"11:00",Math.round(r.hrs*60+60),r.order.map((s,k)=>(k+1)+". "+s.cl.map(nm).join(" + ")+" – "+s.a).join("\n"))}">📅 Kalender</a>`}
+    else if(st&&st.buf)b+=`<div class="n">Puffer-Mittwoch</div><div class="m">Frei für Nachholbesuche.</div>`;else if(!START)b+=`<div class="m">Kein Tourstart festgelegt.</div>`}
+   if(i==3){const V=A.filter(x=>x[1].kind=="V").sort((a,b)=>a[1].dd-b[1].dd);b+=`<div class="n" style="margin-top:8px">Nachmittag: Puffer / Nottermine</div>${V.length?`<div class="m">Nachholbesuche vorschlagen (nicht telefonisch erreichbar):</div>${V.slice(0,6).map(([c])=>`<div class="c" style="padding:4px 0"><span class="m">${h(nm(c))} · Tour ${c.t}</span>${WK.some(w=>w.cid==c.id&&w.d>=mon&&w.d<=fr)?'<span class="tag okk">eingeplant</span>':`<button class="btn g" style="margin:0" onclick="wkPlan(${c.id},'${ds}')">+ einplanen</button>`}</div>`).join("")}`:""}`}
+   if(i==4){const calls=A.filter(x=>x[1].kind=="A"||x[1].call);const W=[];C.forEach(c=>(LOG[c.id]||[]).forEach(e=>{if(e.wv&&!e.done&&e.wvd&&e.wvd<=fr)W.push(`${nm(c)}: ${e.wv}`)}));
+    b+=`<div class="n">📞 Anruftag (${calls.length})</div>${calls.length?`<div class="m">${h(calls.map(x=>nm(x[0])).join(", "))}</div><a class="btn g" target="_blank" href="${friCal(calls.map(x=>x[0]))}">📅 Anrufliste in Kalender</a>`:'<div class="m">Keine Anrufe fällig.</div>'}
+    ${W.length?`<div class="n" style="margin-top:6px">📌 Wiedervorlagen bis Freitag</div><div class="m">${h(W.join("; "))}</div>`:""}
+    <div class="n" style="margin-top:6px">✔ Wochenabschluss</div><div class="m">Kontakte eingetragen? · Wiedervorlagen abgehakt? · Fahrt im Fahrtenbuch? · „📋 Wochenplanung für Claude kopieren“</div>`}}
+  const ce=CAL.ev.filter(e=>ds>=e.d&&ds<=(e.bis||e.d));if(ce.length)b+=`<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--bg)"><div class="m" style="font-weight:700">📅 Aus deinem Kalender</div>${ce.map(e=>`<div style="font-size:14px">${e.v?`<b>${e.v}${e.b?"–"+e.b:""}</b> `:""}${h(e.t)}</div>`).join("")}</div>`;
+  if(items.length)b+=`<div style="margin-top:6px">${items.map(x=>`<div class="c" style="padding:4px 0"><span>${x.v?`<b>${x.v}</b> `:""}${h(x.t)}</span><span style="white-space:nowrap"><a class="btn g" style="margin:0" target="_blank" href="${gTerm(x.t,ds,x.v,60,"")}">📅</a><button class="btn w" style="margin:0 0 0 4px" onclick="wkDel(${x.id})">✕</button></span></div>`).join("")}</div>`;
+  if(done.length)b+=`<div class="m" style="margin-top:6px">✓ Erledigt: ${h(done.map(([c,e])=>nm(c)+" ("+(e.art||(e.typ=="A"?"Anruf":"Besuch"))+")").join(", "))}</div>`;
+  o+=`<div class="card" style="${isT?"border:2px solid var(--acc)":""}"><div class="c" style="border:0;padding:0 0 6px"><h2 style="margin:0">${d.toLocaleDateString("de-DE",{weekday:"long"})} ${dmy(ds).slice(0,6)}${isT?" · heute":""}</h2><button class="btn g" style="margin:0" onclick="wkAdd('${ds}')">+ Termin</button></div>${b||'<div class="m">Bürotag</div>'}</div>`});
+ $("#woche").innerHTML=o}
+let KSEL=null;function openKlient(id){KSEL=id;closeDlg();renderKlient();show("klient")}
+function renderKlist(){const q=(($("#kq")||{}).value||"").toLowerCase();const A=act().filter(c=>!q||(c.n+" "+c.a).toLowerCase().includes(q)).sort((a,b)=>{const k=c=>c.n.replace(/ \([^)]*\)$/,"").split(" ").pop();return k(a).localeCompare(k(b),"de")||a.n.localeCompare(b.n)});
+ const keep=$("#kq")&&document.activeElement==$("#kq");
+ $("#klist").innerHTML=`<div class="card"><div class="row" style="flex-wrap:nowrap"><input id="kq" type="search" placeholder="Klient suchen …" value="${h(q)}" oninput="renderKlist()" style="flex:1;min-width:0"><button class="btn" style="flex:0 0 auto;min-width:0;margin:0" onclick="fillForm(null);show('data')">+ Neu</button></div></div>
+ <div class="card"><h2>Alle Klienten (${A.length})</h2>${A.map(c=>{const p=plan(c);return `<button class="krow" onclick="openKlient(${c.id})"><span style="min-width:0"><span class="n">${h(c.n)}</span><br><span class="m">${c.t?"Tour "+c.t:"ohne Tour"} · ${RT[c.r][0]}</span></span><span class="tag ${p.cls}" style="white-space:nowrap;max-width:46%;overflow:hidden;text-overflow:ellipsis">${h(p.kind=="U"?"unbekannt":p.kind=="A"?"Anruf fällig":p.kind=="V"?"Besuch fällig":p.kind=="B"?"Tour "+(p.nt?dmy(isoD(p.nt)).slice(0,6):""):"ok")}</span></button>`}).join("")}</div>`;
+ if(keep){const e=$("#kq");e.focus();e.setSelectionRange(e.value.length,e.value.length)}}
+function renderKlient(){const c=C.find(x=>x.id==KSEL);if(!c){$("#klient").innerHTML="";return}const p=plan(c);const L=(LOG[c.id]||[]);const W=L.map((e,i)=>[e,i]).filter(([e])=>e.wv&&!e.done);
+ const yr=isoD(addD(today(),-365)),cnt=L.filter(e=>e.d>=yr&&e.typ!="D").length;
+ const ic={b:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>',
+  a:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.5 2.1L8 9.8a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/></svg>',
+  n:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l19-9-9 19-2-8z"/></svg>',
+  t:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>'};
+ const einr=(c.n.match(/\(([^)]*)\)$/)||[,""])[1];
+ $("#klient").innerHTML=`<div class="kh"><button class="back" onclick="show('klienten')">‹ Klienten</button><h1>${h(c.n.replace(/ \([^)]*\)$/,""))}</h1>
+  <div class="sub">${c.t?"Tour "+c.t:"ohne Tour"} · ${c.e=="E"?h(einr||"Einrichtung"):"Wohnung"} · ${RT[c.r][0]}</div>
+  <div style="margin-top:10px"><span class="tag" style="margin-left:0;background:${p.cls=="due"?"var(--amber)":p.cls=="okk"?"#3FC29E":"#3A4B68"};color:${p.cls=="tel"?"#E4EAF4":"#16202B"}">${h(p.txt)}</span>${p.nt&&p.kind!="B"?`<span class="tag" style="background:#24375A;color:#E4EAF4">Tour ${c.t} · ${fmt(p.nt)}</span>`:""}</div></div>
+ <div class="kgrid">${RUN[c.id]?`<button class="kbtn run" onclick="openDlg(${c.id},'B')">${ic.b}Beenden</button>`:`<button class="kbtn p" onclick="logC(${c.id},'B')">${ic.b}Besuch</button>`}
+  <button class="kbtn" onclick="logC(${c.id},'A')"${c.noPhone?' disabled style="opacity:.45"':""}>${ic.a}Anruf</button>
+  ${hasP(c)?`<a class="kbtn" target="_blank" href="${nav(c.mq||c.a)}">${ic.n}Navi</a>`:`<button class="kbtn" disabled style="opacity:.45">${ic.n}Navi</button>`}
+  <button class="kbtn" onclick="openDlg(${c.id},'B')">${ic.t}Notiz</button></div>
+ ${W.length?`<div class="card"><h2>Wiedervorlage</h2>${W.map(([e,i])=>`<div class="c"><div style="min-width:0"><div class="n">${h(e.wv)}</div>${e.wvd?`<div class="m" style="color:${e.wvd<isoToday()?"var(--warn)":"var(--mut)"};font-weight:700">bis ${dmy(e.wvd)}</div>`:""}</div><button class="btn g" style="margin:0" onclick="wvDone(${c.id},${i});renderKlient()">Erledigt</button></div>`).join("")}</div>`:""}
+ <div class="card"><div class="c" style="border:0;padding:0 0 4px"><h2 style="margin:0">Verlauf</h2><span class="m">${cnt} Kontakt${cnt==1?"":"e"} in 12 Monaten</span></div>${histBlock(c)}<button class="btn g" onclick="openDlg(${c.id},'B')">+ Kontakt nachtragen</button></div>
+ <div class="card"><h2>Stammdaten</h2><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;font-size:15px">
+  <div style="grid-column:1/-1"><div class="m">Adresse</div><div class="n">${h(c.a)}</div></div>
+  <div><div class="m">Hausbank</div><div class="n">${h(c.bank||"–")}</div></div>
+  <div><div class="m">Tour</div><div class="n">${c.t?"Tour "+c.t+" · "+h(tnames[c.t-1]||""):"ohne Tour"}</div></div>
+  ${c.note?`<div style="grid-column:1/-1"><div class="m">Notiz</div><div class="n">${h(c.note)}</div></div>`:""}
+  ${c.noPhone||c.noCall?`<div style="grid-column:1/-1"><div class="m">Kontakt</div><div class="n">${c.noPhone?"telefonisch nicht erreichbar – nur Besuche":"regelmäßiger Telefonkontakt"}</div></div>`:""}</div>
+  <div style="margin-top:10px"><button class="btn g" onclick="fillForm(C.find(x=>x.id==${c.id}))">Bearbeiten</button><button class="btn w" onclick="archive(${c.id})">Archivieren</button></div></div>`}
+function renderMehr(){const it=(ic,t,s,fn)=>`<button class="mitem" onclick="${fn}"><span style="width:40px;height:40px;border-radius:12px;background:var(--soft);color:var(--acc);display:flex;align-items:center;justify-content:center;flex:0 0 40px">${ic}</span><span style="min-width:0"><span class="n">${t}</span><br><span class="m">${s}</span></span></button>`;
+ const sv=p=>`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+ $("#mehr").innerHTML=`<div class="card">${it(sv('<path d="M4 6h16M4 12h10M4 18h6"/>'),"Touren","Alle Touren, Reihenfolge der Stopps, Personen verschieben","show('tour')")}
+ ${it(sv('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),"Tour-Kalender & Urlaub","Startdatum, Reihenfolge, Urlaub, feste Orte, Sicherung","show('data')")}
+ ${it(sv('<path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6"/>'),"Protokoll & Export","Kontaktliste, Jahresbericht-PDF, Fahrtenbuch, Sprechstunden","show('prot')")}
+ ${it(sv('<path d="M21 8v13H3V8"/><path d="M1 3h22v5H1zM10 12h4"/>'),"Archiv",C.filter(c=>!c.on).length+" archivierte Klienten","show('archiv')")}
+ ${it(sv('<path d="M12 5v14M5 12h14"/>'),"Neuer Klient","Stammdaten anlegen","fillForm(null);show('data')")}</div>
+ ${C.length?"":'<div class="card" style="background:var(--softw)"><b>Willkommen!</b><br>Auf diesem Gerät sind noch keine Daten. Tippe unten auf „📂 Datei einspielen“ und wähle deine Sicherungsdatei.</div>'}<div class="card"><h2>💾 Sicherung &amp; Updates</h2><p class="hint">Deine Daten liegen nur auf diesem Handy. Sichere sie regelmäßig – z. B. jeden Freitag beim Wochenabschluss. Updates von Claude kommen als Datei und werden hier eingespielt.</p>
+ <button class="btn" onclick="backupAll()">💾 Alles sichern</button> <label class="btn g" style="display:inline-block">📂 Datei einspielen<input type="file" accept=".json,application/json" hidden onchange="importFile(event)"></label>
+ <div class="hint" style="margin-top:6px">Letzte Sicherung: ${S.get("ta2_lastbk","")?dmy(S.get("ta2_lastbk","")):"noch keine"}</div></div>`}
+function renderAll(){const vv=document.querySelector("#ver");if(vv)vv.textContent="Version "+Math.max(UPD.v||0,S.get("ta2_updv",0))+" · "+act().length+" aktive Klienten";const A=act().sort((a,b)=>a.n.localeCompare(b.n)),cur=$("#ziel").value;$("#ziel").innerHTML=`<optgroup label="Feste Orte">${PL.map(p=>`<option value="${p.id}">🏢 ${h(p.n)}</option>`).join("")}</optgroup><optgroup label="Klienten">`+A.filter(hasP).map(c=>`<option value="${c.id}">${h(c.n)} – Tour ${c.t}</option>`).join("")+"</optgroup>";if(cur)$("#ziel").value=cur;
+ $("#places").innerHTML=PL.map(p=>`<div class="c"><div><div class="n">${h(p.n)}</div><div class="m">${h(p.a)}</div></div><button class="btn g" onclick="delPlace('${p.id}')">entfernen</button></div>`).join("");
+ SCHC=null;renderHeute();renderWoche();renderKlist();renderKlient();renderMehr();renderGo();renderTour();renderDue();renderData();renderArchiv();renderProt()}
+async function geoAll(){const b=$("#geo");b.disabled=true;const done=new Map();let ok=0,fail=[];const A=act().filter(c=>c.t>0);
+ for(let i=0;i<A.length;i++){const c=A[i];$("#geos").textContent=`Prüfe ${i+1}/${A.length}: ${c.a}`;
+  if(done.has(c.a)){const g=done.get(c.a);if(g){c.la=g[0];c.lo=g[1];c.geo=1}continue}
+  let g=null;try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de&q=${enc(c.a.replace("–","-"))}`);const j=await r.json();if(j[0])g=[+j[0].lat,+j[0].lon]}catch(e){}
+  done.set(c.a,g);if(g){c.la=g[0];c.lo=g[1];c.geo=1;ok++}else fail.push(c.a);save();await new Promise(r=>setTimeout(r,1100))}
+ $("#geos").innerHTML=`Fertig: ${ok} Adressen geprüft, Touren neu optimiert.${fail.length?"<br>Nicht gefunden: "+h(fail.join("; ")):""}`;b.disabled=false;renderAll()}
+function backupAll(){save();const o={ta2:{}};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("ta2_")&&k!="ta2_pend")o.ta2[k]=localStorage.getItem(k)}o.ta2.ta2_home=JSON.stringify({ll:HOME,a:HOMEA,firma:(_H&&_H.firma)||""});o.ta2.ta2_lastbk=JSON.stringify(isoToday());S.set("ta2_lastbk",isoToday());o.ta2.ta2_updv=JSON.stringify(Math.max(UPD.v||0,S.get("ta2_updv",0)));dl("TourApp_Sicherung_"+isoToday()+".json",JSON.stringify(o),"application/json");flash("Sicherung gespeichert – liegt in „Downloads“.")}
+function importFile(e){const f=e.target.files[0];e.target.value="";if(!f)return;f.text().then(t=>{let j;try{j=JSON.parse(t)}catch(x){flash("Datei ungültig.");return}
+ if(j.ta2){if(C.length&&!confirm("Alle Daten in der App durch die Sicherung ersetzen?"))return;Object.keys(localStorage).filter(k=>k.startsWith("ta2_")).forEach(k=>localStorage.removeItem(k));Object.entries(j.ta2).forEach(([k,v])=>localStorage.setItem(k,v));location.reload();return}
+ if(j.v&&!j.C){if(j.v<=S.get("ta2_updv",0)){flash("Dieses Update ist schon eingespielt.");return}if(j.home)localStorage.setItem("ta2_home",JSON.stringify(j.home));localStorage.setItem("ta2_pend",JSON.stringify(j));location.reload();return}
+ try{C=j.C;LOG=j.LOG||{};tnames=j.tnames||tnames;START=j.START||"";PL=j.PL||PL;FB=j.FB||FB;BLK=j.BLK||BLK;SP=j.SP||SP;WK=j.WK||WK;save();renderAll();flash("Sicherung geladen.")}catch(x){flash("Datei ungültig.")}})}
+$("#exp").onclick=backupAll;$("#imp").onchange=importFile;
+$("#save").onclick=saveForm;$("#reset").onclick=()=>fillForm(null);$("#srch").oninput=renderData;$("#geo").onclick=geoAll;$("#rebal").onclick=rebalance;
+$("#ziel").onchange=()=>{here=null;renderGo()};
+let FREEZ=null;
+function normAdr(s){return s.replace(/\s+in\s+(?=\d{5})/i,", ").replace(/\bstr\b\.?/gi,"straße").replace(/(\w)str\.?(?=\s|,|$)/gi,"$1straße").replace(/\s{2,}/g," ").trim()}
+const hyph=s=>s.replace(/([A-Za-zÄÖÜäöüß]+)\s+([A-Za-zÄÖÜäöüß]+)[\s-]+(straße|weg|allee|platz|ring|damm|chaussee|stieg|kamp|twiete)\b/gi,"$1-$2-$3");
+const noPLZ=s=>s.replace(/\b\d{5}\b/,"").replace(/,\s*,/g,",").replace(/\s{2,}/g," ").replace(/,\s*$/,"").trim();
+async function geoFull(q){const tryJ=async u=>{try{const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),9000);const r=await fetch(u,{signal:ctl.signal});clearTimeout(tm);if(!r.ok)return null;return await r.json()}catch(e){return null}};
+ const V=[...new Set([q,hyph(q),noPLZ(q),hyph(noPLZ(q))].map(s=>s.trim()).filter(Boolean))];
+ for(const v of V){const j=await tryJ(`https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&countrycodes=de&q=${enc(v)}`);const x=j&&j[0];
+  if(x){const a=x.address||{};const str=[a.road||a.pedestrian||a.footway||"",a.house_number||""].join(" ").trim();const city=[a.postcode||"",a.city||a.town||a.village||a.suburb||""].join(" ").trim();
+   return{la:+x.lat,lo:+x.lon,adr:[str,city].filter(Boolean).join(", ")||x.display_name,name:x.name&&x.name!=a.road?x.name:""}}}
+ for(const v of V.slice(0,2)){const j=await tryJ(`https://photon.komoot.io/api/?q=${enc(v)}&limit=1&lang=de&lat=53.56&lon=10.0`);const f=j&&j.features&&j.features[0];
+  if(f){const p=f.properties||{};const str=[p.street||"",p.housenumber||""].join(" ").trim();const city=[p.postcode||"",p.city||p.district||""].join(" ").trim();
+   return{la:f.geometry.coordinates[1],lo:f.geometry.coordinates[0],adr:[str||p.name||"",city].filter(Boolean).join(", "),name:p.name&&p.name!=p.street?p.name:""}}}
+ return null}
+async function pickFree(){const raw=$("#zq").value.trim();$("#zs").innerHTML='<div class="hint" style="padding:8px">Suche Adresse …</div>';
+ let q=normAdr(raw);if(!/\b\d{5}\b/.test(q)&&!/hamburg/i.test(q))q+=", Hamburg";let G=await geoFull(q);
+ if(!G){const plz=(q.match(/\b\d{5}\b/)||[])[0];const same=plz&&C.find(x=>x.a.includes(plz)&&hasP(x));if(same)G={la:same.la,lo:same.lo,adr:q,name:"",approx:1}}
+ const g=G?[G.la,G.lo]:null;
+ if(!g){$("#zs").innerHTML='<div class="hint" style="padding:8px">Adresse nicht gefunden. Bitte als „Straße Nr., PLZ Ort“ eingeben, z. B. „Paul-Ehrlich-Straße 1, 22763 Hamburg“. Internet nötig.</div>';return}
+ FREEZ={id:"free",n:"Termin: "+(G.name||raw),a:G.adr,mq:G.approx?null:G.la.toFixed(6)+","+G.lo.toFixed(6),la:g[0],lo:g[1],typed:raw,approx:G.approx};here=null;LASTZ=null;$("#zs").innerHTML="";renderGo();$("#out").scrollIntoView({behavior:"smooth"})}
+function saveFree(){if(!FREEZ)return;const n=prompt("Name für diesen Ort (z. B. Amtsgericht Altona):",FREEZ.n.replace(/^Termin: /,""));if(!n)return;const p={id:"p"+Date.now(),n,a:FREEZ.a,mq:FREEZ.mq,la:FREEZ.la,lo:FREEZ.lo};PL.push(p);save();FREEZ=null;renderAll();pick(p.id);flash(`„${h(n)}“ als fester Ort gespeichert.`)}
+function pick(v){FREEZ=null;$("#ziel").value=v;here=null;$("#zs").innerHTML="";const o=[...$("#ziel").options].find(x=>x.value==v);$("#zq").value=o?o.textContent.replace(/^🏢 /,""):"";renderGo();$("#out").scrollIntoView({behavior:"smooth"})}
+$("#zq").oninput=()=>{const q=$("#zq").value.trim().toLowerCase();if(!q){$("#zs").innerHTML="";return}
+ const L=[...$("#ziel").options].filter(o=>o.textContent.toLowerCase().includes(q)||o.textContent.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").includes(q)).slice(0,8);
+ const raw=$("#zq").value.trim(),adrLike=/\d/.test(raw)||raw.includes(",");const free=raw.length>=4?`<button class="sug" onclick="pickFree()">📍 „${h(raw)}“ als Adresse verwenden</button>`:"";
+ $("#zs").innerHTML=(adrLike?free:"")+L.map(o=>`<button class="sug" onclick="pick('${o.value}')">${h(o.textContent)}</button>`).join("")+(adrLike?"":free)||'<div class="hint" style="padding:8px">Kein Treffer.</div>'};
+$("#zq").onkeydown=e=>{if(e.key==="Enter"){const b=document.querySelector("#zs .sug");if(b)b.click()}};
+$("#zq").placeholder="Name, Ort oder freie Adresse (z. B. Max-Brauer-Allee 89)";function setRad(k){$("#rad").value=k;renderGo()}
+$("#gps").onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{here=[p.coords.latitude,p.coords.longitude];renderGo()},()=>flash("Standort nicht verfügbar.")):flash("Kein GPS.");
+const VIEWS={heute:["heute"],woche:["woche"],klienten:["klist","due"],due:["klist","due"],go:["go"],mehr:["mehr"],data:["data"],prot:["prot"],tour:["tour"],archiv:["archiv"],klient:["klient"]};
+const NAVOF={heute:"heute",woche:"woche",klienten:"klienten",due:"klienten",klient:"klienten",data:"mehr",go:"go",mehr:"mehr",prot:"mehr",tour:"mehr",archiv:"mehr"};
+let VIEW="heute";function show(v){VIEW=v;const on=VIEWS[v]||["heute"];["heute","woche","go","tour","due","data","prot","archiv","klist","klient","mehr"].forEach(id=>{const e=$("#"+id);if(e)e.hidden=!on.includes(id)});
+ document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x.dataset.t==NAVOF[v]));window.scrollTo(0,0)}
+document.querySelectorAll(".tabs button,#alias button").forEach(b=>b.onclick=()=>show(b.dataset.t));
+$("#start").value=START;
+function delPlace(id){PL=PL.filter(p=>p.id!=id);save();renderAll()}
+$("#p_add").onclick=async()=>{const n=$("#p_n").value.trim(),a=$("#p_a").value.trim();if(!n||!a)return;const g=await geocode(a);if(!g){flash("Adresse nicht gefunden (Internet nötig).");return}PL.push({id:"p"+Date.now(),n,a,la:g[0],lo:g[1]});$("#p_n").value=$("#p_a").value="";save();renderAll();flash("Ort gespeichert.")};
+function addBlk(){const v=$("#b_von").value,b=$("#b_bis").value||v;if(!v){flash("Bitte ein Startdatum wählen.");return}BLK.push({von:v<b?v:b,bis:v<b?b:v,grund:$("#b_g").value.trim()||"Urlaub"});BLK.sort((a,b)=>a.von<b.von?-1:1);SCHC=null;save();$("#b_von").value=$("#b_bis").value=$("#b_g").value="";renderAll();renderCal();flash("Sperrzeit gespeichert – Touren neu terminiert.")}
+function delBlk(i){BLK.splice(i,1);SCHC=null;save();renderAll();renderCal()}
+function renderCal(){$("#ordl").innerHTML=ordList().map((x,i)=>`<div class="c" style="padding:4px 0"><span><b>${i+1}.</b> Tour ${x} – ${h(tnames[x-1]||"")} <span class="tag ${prio(x)>=4?"due":"tel"}">${prio(x)}</span></span><span style="white-space:nowrap"><button class="btn g" style="margin:0;padding:4px 9px" onclick="moveOrd(${i},-1)">▲</button><button class="btn g" style="margin:0 0 0 4px;padding:4px 9px" onclick="moveOrd(${i},1)">▼</button></span></div>`).join("");
+ $("#blkl").innerHTML=BLK.map((b,i)=>`<div class="c"><div><div class="n">${dmy(b.von)} – ${dmy(b.bis)}</div><div class="m">${h(b.grund)}</div></div><button class="btn w" onclick="delBlk(${i})">✕</button></div>`).join("");
+ if(!START){$("#cal").textContent="Noch kein Start festgelegt.";return}const L=schedTours().filter(x=>x.d>=addD(today(),-6)).slice(0,16);
+ $("#cal").innerHTML=L.map(x=>`<div style="padding:2px 0">${fmt(x.d)}: ${x.skip?`<span style="background:#f6bf26;color:#3a2d00;padding:1px 6px;border-radius:6px">frei – ${h(x.skip)}</span>`:x.t?`<b>Tour ${x.t}</b> ${h(tnames[x.t-1]||"")}`:"Puffer / Nachholtermine"}</div>`).join("")}
+$("#start").onchange=e=>{const d=new Date(e.target.value);if(d.getDay()!=3){flash("Bitte einen Mittwoch wählen.");e.target.value=START;return}START=e.target.value;save();renderAll();renderCal()};
+$("#ics").onclick=()=>{if(!START){flash("Bitte zuerst den Start-Mittwoch eintragen.");return}const p=n=>String(n).padStart(2,"0"),D=d=>`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`;
+ let s="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//TourApp//DE\r\n";const lim=addD(today(),365);
+ schedTours().filter(x=>x.t&&x.d>=today()&&x.d<=lim).forEach(x=>{const r=optimize(x.t);if(!r.order.length)return;
+  s+=`BEGIN:VEVENT\r\nUID:tour${x.t}-${D(x.d)}-hartleb@tourapp\r\nDTSTAMP:${D(new Date())}T000000Z\r\nDTSTART;TZID=Europe/Berlin:${D(x.d)}T110000\r\nDTEND;TZID=Europe/Berlin:${D(x.d)}T${p(Math.min(20,11+Math.ceil(r.hrs)))}0000\r\nSUMMARY:Tour ${x.t}: ${(tnames[x.t-1]||"").replace(/[,;]/g," ")}\r\nDESCRIPTION:${r.order.map((o,i)=>(i+1)+". "+o.cl.map(c=>c.n).join(" + ")+" – "+o.a).join("\\n").replace(/[,;]/g," ")}\r\nEND:VEVENT\r\n`});
+ s+="END:VCALENDAR\r\n";dl("Touren.ics",s,"text/calendar");flash("Tourtermine der nächsten 12 Monate als Kalenderdatei erstellt (Feiertage/Urlaub berücksichtigt).")};
+applyUpd();$("#sz1").value=SZ["1"]||"";$("#sz4").value=SZ["4"]||"";$("#ver").textContent="Version "+UPD.v+" · "+act().length+" aktive Klienten";renderCal();renderAll();$("#out").innerHTML='<div class="card hint">Oben einen Namen eintippen – z. B. ein Name – und den Treffer antippen.</div>';
+
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").then(r=>{r.onupdatefound=()=>{const w=r.installing;w.onstatechange=()=>{if(w.state=="installed"&&navigator.serviceWorker.controller)flash("Neue App-Version geladen – App einmal schließen und neu öffnen.")}}});
+if(!C.length)show("mehr");
+</script></body></html>
