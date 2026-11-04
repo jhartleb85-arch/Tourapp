@@ -1,6 +1,6 @@
 {
- "name": "Tour-Assistent",
- "short_name": "Touren",
+ "name": "ReBeKo – der Kompass für rechtliche Betreuung",
+ "short_name": "ReBeKo",
  "lang": "de",
  "start_url": "./",
  "scope": "./",
