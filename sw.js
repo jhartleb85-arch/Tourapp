@@ -1,4 +1,4 @@
-const V="tour-v99";const SHELL=["./","index.html","manifest.webmanifest","icon-192.png?v99","icon-512.png?v99"];
+const V="tour-v100";const SHELL=["./","index.html","manifest.webmanifest","icon-192.png?v100","icon-512.png?v100"];
 self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)))});
 self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!=V).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",e=>{const u=new URL(e.request.url);if(e.request.method!="GET")return;

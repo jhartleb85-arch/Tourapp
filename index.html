@@ -108,7 +108,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=99;
+const APPV=100;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -549,7 +549,7 @@ function renderHeute(){tourInvites();const d=today(),wd=d.getDay(),A=act().map(c
  if(sch&&sch.t){const r=optimize(sch.t);o+=`<div class="card"><h2>🚗 Heute: Tour ${sch.t} – ${h(tnames[sch.t-1]||"")}</h2><div class="hint">${r.pers} Pers. · vor Ort ca. ${r.hrs.toFixed(1).replace(".",",")} h</div>${r.order.map((s,i)=>`<div class="stop"><div class="num">${i+1}</div><div><div class="n">${s.cl.map(c=>h(c.n.split(" (")[0])).join(", ")}</div><div class="m">${h(s.a)}</div></div></div>`).join("")}<button class="btn" onclick="startTour(${sch.t})">▶ Tour starten (Rundweg, Banken, Zeiten)</button></div>`}
  else if(nx)o+=`<div class="card"><h2>🚗 Nächste Tour: Tour ${nx.t} am ${fmt(nx.d)}</h2><div class="hint">${h(tnames[nx.t-1]||"")}</div><button class="btn g" onclick="startTour(${nx.t})">ansehen</button></div>`;
  else if(!START)o+=`<div class="card hint">Start-Mittwoch fehlt: Stammdaten → Tour-Kalender.</div>`;
- if(RUNT)o+=`<div class="card" style="background:var(--softw)"><b>🚗 Unterwegs-Modus läuft</b> – Stopp ${Math.min(RUNT.idx+1,RUNT.stops.length)} von ${RUNT.stops.length}<button class="btn big" onclick="show('run')">▶ Fortsetzen</button></div>`;
+ if(RUNT)o+=RUNT.idx>=RUNT.stops.length||RUNT.phase=="end"?`<div class="card" style="background:var(--softw)"><b>✅ Alle Stopps erledigt</b> – nur noch Kilometer bestätigen und abschließen.<button class="btn big" onclick="show('run')">💾 Tour abschließen</button></div>`:`<div class="card" style="background:var(--softw)"><b>🚗 Unterwegs-Modus läuft</b> – Stopp ${RUNT.idx+1} von ${RUNT.stops.length}<button class="btn big" onclick="show('run')">▶ Fortsetzen</button></div>`;
  o+=sprechToday();if(TRUN&&0)o+=`<div class="card" style="background:var(--softw)"><b>⏱ Bürozeit läuft seit ${hm(new Date(TRUN.s))}${TRUN.ps?" · ⏸ Pause":""}</b><button class="btn g" onclick="show('zeit')">öffnen</button><button class="btn run" onclick="timeStop()">⏹ beenden</button></div>`;
  o+=todoSum()+quickCallCard()+doneToday();
  $("#heute").innerHTML=(RO?`<div class="card" style="background:var(--softw)"><b>👁 Nur-Ansehen-Modus</b> – auf diesem Gerät wird nichts gespeichert. Ausschalten unter Mehr → Dieses Gerät.</div>`:"")+o;renderTodoBadge();return;
@@ -904,7 +904,7 @@ let RUNT=S.get("ta2_runt",null),REC=null;
 function runSave(){S.set("ta2_runt",RUNT)}
 function runStart(){const lo=window._LO;if(!lo||!lo.o.length){flash("Bitte zuerst ein Ziel / eine Tour wählen.");return}
  const stops=lo.o.map(s=>{const ids=s.bank?[]:act().filter(c=>c.a==s.a&&(PICK.has(c.id)||(LASTZ&&c.id==LASTZ)||s.n.includes(c.n))).map(c=>c.id);return{n:s.n,a:s.a,p:s.p,mq:s.mq||"",bank:s.bank?1:0,ids,seen:[...ids],arr:"",dep:"",txt:{},wv:{},skip:0}});
- RUNT={start:nowISO(),idx:0,stops,km:lo.km,phase:"drive"};runSave();show("run");renderRun()}
+ RUNT={start:nowISO(),idx:0,stops,km:lo.km,phase:"drive"};stops[0].drv=RUNT.start;runSave();show("run");renderRun()}
 function runVisitStart(){const s=RUNT.stops[RUNT.idx];s.arr=nowISO();RUNT.phase="visit";runSave();renderRun()}
 function runSkip(){const s=RUNT.stops[RUNT.idx];s.skip=1;runNext()}
 function runToggle(id){const s=RUNT.stops[RUNT.idx];s.seen=s.seen.includes(id)?s.seen.filter(x=>x!=id):[...s.seen,id];runSave();renderRun()}
@@ -916,22 +916,22 @@ function runMic(id){const SR=window.SpeechRecognition||window.webkitSpeechRecogn
 function runNext(){const s=RUNT.stops[RUNT.idx];if(RUNT.phase=="visit"&&!s.bank){s.dep=nowISO();const von=s.arr.slice(11,16),bis=s.dep.slice(11,16),d=s.arr.slice(0,10);
   s.seen.forEach(id=>{const c=C.find(x=>x.id==id);if(!c)return;(LOG[id]=LOG[id]||[]).push({ts:nowISO(),d,typ:"B",art:c.e=="E"?"Besuch Einrichtung":"Hausbesuch",von,bis,anw:"",txt:(s.txt[id]||"").trim(),wv:(s.wv[id]||"").trim(),wvd:"",src:"run"});delete RUN[id]});save()}
  if(RUNT.phase=="visit"&&s.bank){s.dep=nowISO()}
- RUNT.idx++;RUNT.phase="drive";runSave();if(RUNT.idx>=RUNT.stops.length)RUNT.phase="end";renderRun()}
+ RUNT.idx++;RUNT.phase="drive";if(RUNT.idx>=RUNT.stops.length){RUNT.phase="end";RUNT.back=nowISO()}else RUNT.stops[RUNT.idx].drv=nowISO();runSave();renderRun()}
 function runFinish(){const km=+(($("#run_km")||{}).value)||RUNT.km;const st=RUNT.stops.filter(s=>!s.skip);const a=new Date(RUNT.start);
  FB.push({id:Date.now(),d:RUNT.start.slice(0,10),ab:hm(a),an:nowHM(),stops:st.map(s=>s.bank?"Bank: "+s.n.replace("🏦 ",""):s.n),adr:st.filter(s=>!s.bank).map(s=>s.a),km,zweck:"Betreuungsbesuche (Berufsbetreuung)"});
  const n=st.reduce((q,s)=>q+s.seen.length,0);RUNT=null;runSave();save();show("heute");renderAll();flash(`✅ Tour abgeschlossen: ${n} Besuche eingetragen, ${km} km im Fahrtenbuch.`)}
 function runCancel(){if(!confirm("Unterwegs-Modus beenden? Bereits beendete Besuche bleiben gespeichert, ins Fahrtenbuch wird nichts eingetragen."))return;RUNT=null;runSave();show("heute");renderAll()}
-function renderRun(){const el=$("#run");if(!el)return;if(!RUNT){el.innerHTML='<div class="card hint">Kein Unterwegs-Modus aktiv. Starten unter „Unterwegs“ → Rundweg → „▶ Unterwegs-Modus“.</div>';return}
+function renderRun(){const el=$("#run");if(!el)return;if(RUNT&&RUNT.idx>=RUNT.stops.length&&RUNT.phase!="end"){RUNT.phase="end";runSave()}if(!RUNT){el.innerHTML='<div class="card hint">Kein Unterwegs-Modus aktiv. Starten unter „Unterwegs“ → Rundweg → „▶ Unterwegs-Modus“.</div>';return}
  const n=RUNT.stops.length,i=RUNT.idx,bar=RUNT.stops.map((s,k)=>`<div style="flex:1;height:6px;border-radius:3px;background:${k<i?(s.skip?"#7A8BA6":"#3FC29E"):k==i?"#F2B33D":"#33456A"}"></div>`).join("");
  let o=`<div class="runhd"><div class="m" style="color:#9FB0CC;letter-spacing:.08em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;font-size:15px">Unterwegs · seit ${RUNT.start.slice(11,16)} Uhr</div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div style="font-size:20px;font-weight:700">${RUNT.phase=="end"?"Alle Stopps erledigt":"Stopp "+(i+1)+" von "+n}</div><button class="btn g" style="margin:0;background:transparent;color:#fff;border-color:#3A4B68" onclick="runCancel()">Beenden</button></div><div style="display:flex;gap:5px;margin-top:10px">${bar}</div></div>`;
  if(RUNT.phase=="end"){const st=RUNT.stops.filter(s=>!s.skip);const nb=st.reduce((q,s)=>q+s.seen.length,0);const a=new Date(RUNT.start),hh=(new Date()-a)/36e5;
-  o+=`<div class="card"><h2>✅ Tour-Abschluss</h2><div class="n">${nb} Besuche · ${st.length} Stopps · ${hrsTxt(hh)} Std. unterwegs${H8(hh)?' · <b style="color:var(--warn)">über 8 Std.</b>':""}</div><label for="run_km">Kilometer (Tacho, sonst Schätzung)</label><input id="run_km" type="number" value="${RUNT.km}"><button class="btn" onclick="runFinish()">💾 Abschließen & ins Fahrtenbuch</button></div>`;el.innerHTML=o;return}
+  const vis=st.reduce((q,s)=>q+(s.arr&&s.dep?(new Date(s.dep)-new Date(s.arr))/6e4:0),0),drv=Math.max(0,hh*60-vis);o+=`<div class="card"><h2>✅ Tour-Abschluss</h2><div class="n">${nb} Besuche · ${st.length} Stopps · ${hrsTxt(hh)} Std. unterwegs${H8(hh)?' · <b style="color:var(--warn)">über 8 Std.</b>':""}</div><div class="m">davon Besuche ca. ${Math.round(vis)} Min. · Fahrt & Wege ca. ${Math.round(drv)} Min.</div><label for="run_km">Kilometer (Tacho, sonst Schätzung)</label><input id="run_km" type="number" value="${RUNT.km}"><button class="btn" onclick="runFinish()">💾 Abschließen & ins Fahrtenbuch</button></div>`;el.innerHTML=o;return}
  const s=RUNT.stops[i],cl=s.ids.map(id=>C.find(c=>c.id==id)).filter(Boolean);const prev=i?RUNT.stops[i-1].p:HOME;const km=dist(prev,s.p);const tasks=openTasks().filter(t=>s.ids.includes(t.cid)||(s.bank&&t.bank&&bankKey(s.n)==t.bank));
  if(RUNT.phase=="drive"){o+=`<div class="card"><div class="m" style="text-transform:uppercase;letter-spacing:.08em">Nächster Stopp</div><h1 style="margin:4px 0 2px;font-size:28px;line-height:1.1">${h(s.bank?s.n:(cl.length>1?cl.map(c=>c.n.split(" (")[0]).join(", "):s.n.split(" (")[0]))}</h1><div class="m">${h(s.a)}</div>
   <div style="display:flex;gap:18px;align-items:baseline;margin-top:8px"><div><span style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:700">${Math.max(3,Math.round(km>20?km/55*60+10:km/25*60))}</span> Min.</div><div><span style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:700">${km.toFixed(1).replace(".",",")}</span> km</div></div>
   ${cl.filter(c=>c.note).map(c=>`<div class="hint" style="background:var(--softw);border-radius:10px;padding:8px 10px;margin-top:6px">${h(c.n.split(" (")[0])}: ${h(c.note)}</div>`).join("")}
   ${tasks.length?`<div style="margin-top:8px">${tasks.map(t=>taskRow(t,{mini:1})).join("")}</div>`:""}</div>
-  <button class="btn big" onclick="runVisitStart()">▶ ${s.bank?"Bank – angekommen":"Besuch starten"}</button>
+  <div class="hint" style="margin:-4px 4px 8px">🚗 Fahrt läuft seit ${s.drv?s.drv.slice(11,16):RUNT.start.slice(11,16)} Uhr – zählt als Fahrzeit, nicht als Besuch.</div><button class="btn big" onclick="runVisitStart()">📍 Angekommen – ${s.bank?"Bank":"Besuch beginnt"}</button>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><a class="btn g" target="_blank" href="${nav(wpt(s))}">🧭 Navigation</a><button class="btn g" onclick="runSkip()">⏭ Überspringen</button></div>`}
  else{const mins=Math.round((new Date()-new Date(s.arr))/6e4);
   o+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="m" style="text-transform:uppercase;letter-spacing:.08em">${s.bank?"Bank":"Besuch läuft"} · seit ${s.arr.slice(11,16)}</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:700;line-height:1">${Math.floor(mins/60)}:${String(mins%60).padStart(2,"0")}</div></div><button class="btn g" style="margin:0" onclick="renderRun()">↻</button></div></div>`;
