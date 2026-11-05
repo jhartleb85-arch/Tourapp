@@ -108,7 +108,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=105;
+const APPV=106;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -515,7 +515,7 @@ function renderProt(){const y=new Date().getFullYear();const keep=id=>($("#"+id)
  ${FB.slice().sort((a,b)=>a.d<b.d?1:-1).slice(0,30).map(f=>`<div class="c"><div style="min-width:0">${H8(fbH(f))?`<div class="big8">‼️ ÜBER 8 STD. AUSSER HAUS (${hrsTxt(fbH(f))} Std.)</div>`:""}<div class="n">${dmy(f.d)} · ${f.km} km · ${f.ab||"?"}–${f.an||"?"} Uhr</div><div class="m">${h(f.stops.join(" – "))}</div></div><div style="white-space:nowrap"><button class="btn g" onclick="editFB(${f.id})">✏️</button><button class="btn w" onclick="delFB(${f.id})">✕</button></div></div>`).join("")||'<div class="hint">Noch keine Fahrten.</div>'}</div>
  <div class="card"><h2>☕ Sprechstunden (${SP.length})</h2><button class="btn" onclick="show('sprech')">Zum Reiter „Sprechstunde“</button></div>
  <div class="card"><h2>Letzte Kontakte</h2>${all.slice(0,25).map(([c,e])=>`<div class="c"><div style="min-width:0"><div class="n">${dmy(e.d)} · ${h(c.n)}</div><div class="m">${h(e.art||(e.typ=="A"?"Anruf":"Besuch"))}${mins(e)?" · "+mins(e)+" Min.":""}${e.txt?" · "+h(e.txt.slice(0,80))+(e.txt.length>80?"…":""):""}</div></div><button class="btn g" onclick="openHist(${c.id})">🗂</button></div>`).join("")||'<div class="hint">Noch keine Kontakte erfasst.</div>'}</div>`}
-const surN=c=>{const n=c.n.replace(/ \([^)]*\)$/,"").trim().split(/\s+/);return (n.length>1&&/^(von|van|de|el|al)$/i.test(n[n.length-2])?n.slice(-2).join(" "):n[n.length-1]).toLowerCase()};const bySur=(a,b)=>surN(a).localeCompare(surN(b),"de")||a.n.localeCompare(b.n,"de");
+const surN=c=>{const raw=c.n.replace(/ \([^)]*\)$/,"").trim();if(raw.includes(","))return raw.split(",")[0].trim().toLowerCase();const n=raw.split(/\s+/);return (n.length>1&&/^(von|van|de|el|al)$/i.test(n[n.length-2])?n.slice(-2).join(" "):n[n.length-1]).toLowerCase()};const bySur=(a,b)=>surN(a).localeCompare(surN(b),"de")||a.n.localeCompare(b.n,"de");
 function todoData(){const d=today(),A=act().map(c=>[c,plan(c)]);const calls=A.filter(x=>x[1].kind=="A"||x[1].call).sort((a,b)=>a[1].dd-b[1].dd);const VV=A.filter(x=>x[1].kind=="V").sort((a,b)=>a[1].dd-b[1].dd);const unk=A.filter(x=>x[1].kind=="U");
  const W=[];C.forEach(c=>(LOG[c.id]||[]).forEach((e,i)=>{if(e.wv&&!e.done&&(!e.wvd||e.wvd<=isoD(addD(d,7))))W.push([c,e,i])}));W.sort((a,b)=>(a[1].wvd||"0")<(b[1].wvd||"0")?-1:1);
  const B=berItems(),T=openTasks().filter(t=>!t.plan||t.plan<=isoD(addD(d,14))),I=TASK.filter(t=>t.inv&&!t.done);const lb=S.get("ta2_lastbk",""),bkAge=lb?Math.round((today()-new Date(lb.slice(0,10)+"T00:00"))/DAY):999;
