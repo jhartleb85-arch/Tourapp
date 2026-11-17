@@ -108,7 +108,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=125;
+const APPV=126;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -389,7 +389,9 @@ function loopOrder(z,p){const pts=loopPts(z,p),E=pts[pts.length-2];
  const S0=[{n:z?z.n:"Ziel",a:z?z.a:p.join(","),mq:z&&z.mq,p,ppl:z&&z.t?1:0,free:z&&z.id=="free"?1:0}];
  const byA=new Map();act().filter(c=>PICK.has(c.id)&&hasP(c)).forEach(c=>{if(z&&c.a==z.a){S0[0].ppl++;S0[0].n+=" + "+c.n;return}if(!byA.has(c.a))byA.set(c.a,{n:c.n,a:c.a,p:P(c),ppl:0});const s=byA.get(c.a);s.ppl++;if(s.n!=c.n&&!s.n.includes(c.n))s.n+=" + "+c.n});
  let st=[...S0,...byA.values(),...EXS.map(x=>({n:"📍 "+x.n,a:x.a,p:x.p,ppl:0,free:1,dur:x.dur||30}))];if(PB)st.push({n:"🏦 "+PB.n,a:bAdr(PB),p:PB.p,ppl:0,bank:1});
- const okF=o=>{let l="";for(const s of o){const f=FIXT[s.a];if(f){if(f<l)return false;l=f}}return true};let best=null;const fa=FIRSTA&&st.some(s=>s.a==FIRSTA)?FIRSTA:"";for(const o of (st.length<=7?perms(st):[st])){if(!okF(o))continue;if(fa&&o[0].a!=fa)continue;let L=dist(E,o[0].p);for(let i=0;i<o.length-1;i++)L+=dist(o[i].p,o[i+1].p);L+=dist(o[o.length-1].p,E);if(!best||L<best.L)best={L,o}}if(!best)best={L:0,o:st};if(REV&&best.o.length>1){const r=best.o.slice().reverse();if(okF(r)&&(!fa||r[0].a==fa))best={L:best.L,o:r}}
+ const okF=o=>{let l="";for(const s of o){const f=FIXT[s.a];if(f){if(f<l)return false;l=f}}return true};let best=null;const fa=FIRSTA&&st.some(s=>s.a==FIRSTA)?FIRSTA:"";
+ const cm=(a,b)=>dist(a,b)*1.3/22*60,hm_=km=>km*1.2/80*60;let gw=0;for(let i=0;i<pts.length-2;i++)gw+=dist(pts[i],pts[i+1]);const G=[{p:E,t:hm_(gw)}];if(pts.includes(WP.ELB))G.push({p:WP.HORN,t:hm_(dist(HOME,WP.KOST)+dist(WP.KOST,WP.HORN))});
+ for(const o of (st.length<=7?perms(st):[st])){if(!okF(o))continue;if(fa&&o[0].a!=fa)continue;let L=Math.min(...G.map(g=>g.t+cm(g.p,o[0].p)));for(let i=0;i<o.length-1;i++)L+=cm(o[i].p,o[i+1].p);L+=Math.min(...G.map(g=>g.t+cm(o[o.length-1].p,g.p)));if(!best||L<best.L)best={L,o}}if(!best)best={L:0,o:st};if(REV&&best.o.length>1){const r=best.o.slice().reverse();if(okF(r)&&(!fa||r[0].a==fa))best={L:best.L,o:r}}
  let far=0;for(let i=0;i<pts.length-2;i++)far+=dist(pts[i],pts[i+1]);
  const ppl=best.o.reduce((s,x)=>s+x.ppl,0);return{o:best.o,km:loopKm(best.o.map(s=>s.p)),min:ppl*45+best.o.length*10+(PB?15:0)}}
 function goStart(){const td=isoToday(),lim=isoD(addD(today(),35));const T=schedTours().filter(x=>x.t&&isoD(x.d)>=td).slice(0,3);
