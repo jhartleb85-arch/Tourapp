@@ -66,7 +66,8 @@ h2{font-family:'Barlow Condensed',system-ui,sans-serif;font-weight:700;font-size
   <div class="row"><div><label for="f_bdue">Jahresbericht fällig am</label><input type="date" id="f_bdue"></div><div><label for="f_beg">Betreuung seit (Bestellung)</label><input type="date" id="f_beg"></div></div>
   <div class="row"><div><label for="f_wf">Wohnform (Pauschale)</label><select id="f_wf"><option value="">automatisch</option><option value="st">stationär / gleichgestellt</option><option value="am">ambulant / andere</option></select></div><div><label style="display:flex;gap:8px;align-items:center;margin-top:30px;color:var(--ink);font-size:14px"><input type="checkbox" id="f_ml" style="width:auto"> mittellos</label></div></div>
   <label style="display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--ink);font-size:14px"><input type="checkbox" id="f_nc" style="width:auto"> Regelmäßiger Telefonkontakt – keine Anruf-Erinnerungen</label>
-  <label style="display:flex;gap:8px;align-items:center;margin-top:6px;color:var(--ink);font-size:14px"><input type="checkbox" id="f_np" style="width:auto"> Telefonisch nicht erreichbar – nur Besuche</label>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:6px;color:var(--ink);font-size:14px"><input type="checkbox" id="f_np" style="width:auto" onchange="if(!$('#f_ni').dataset.set)$('#f_ni').checked=this.checked"> Telefonisch nicht erreichbar – nur Besuche</label>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:6px;color:var(--ink);font-size:14px"><input type="checkbox" id="f_ni" style="width:auto" onchange="this.dataset.set=1"> ✉️ Keine Termineinladung (kann keine Briefe bekommen)</label>
   <button class="btn" id="save">Speichern & Tour optimieren</button><button class="btn g" id="reset">Neu / leeren</button>
   <div id="fstat" class="hint" style="margin-top:6px"></div></div>
  <div class="card"><h2>Alle aktiven Klienten (<span id="cnt"></span>)</h2><input id="srch" placeholder="Suchen …"><div id="list"></div></div>
@@ -108,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=127;
+const APPV=128;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -152,12 +153,12 @@ async function geocode(a){const G=await geoFull(normAdr(a.replace("–","-")));i
 // ---------- Stammdaten ----------
 function fillForm(c){const ts=document.getElementById("f_ts");if(ts)ts.innerHTML="";$("#fh").textContent=c?"Klient bearbeiten":"Neuen Klienten anlegen";$("#f_id").value=c?c.id:"";
  const m=c?c.n.match(/^(.*) \((.*)\)$/):null;$("#f_n").value=c?(m?m[1]:c.n):"";$("#f_einr").value=m?m[2]:"";$("#f_a").value=c?c.a:"";
- $("#f_r").value=c?c.r:"A";$("#f_t").value=c?String(c.t):"auto";$("#f_bank").value=c?c.bank||"":"";$("#f_note").value=c?c.note||"":"";$("#f_bdue").value=c?c.bdue||"":"";$("#f_beg").value=c?c.beg||"":"";$("#f_wf").value=c?c.wf||"":"";$("#f_ml").checked=!!(c&&c.ml);$("#f_nc").checked=!!(c&&c.noCall);$("#f_np").checked=!!(c&&c.noPhone);$("#fstat").textContent="";
+ $("#f_r").value=c?c.r:"A";$("#f_t").value=c?String(c.t):"auto";$("#f_bank").value=c?c.bank||"":"";$("#f_note").value=c?c.note||"":"";$("#f_bdue").value=c?c.bdue||"":"";$("#f_beg").value=c?c.beg||"":"";$("#f_wf").value=c?c.wf||"":"";$("#f_ml").checked=!!(c&&c.ml);$("#f_nc").checked=!!(c&&c.noCall);$("#f_np").checked=!!(c&&c.noPhone);$("#f_ni").checked=!!(c&&noInv(c));delete $("#f_ni").dataset.set;$("#fstat").textContent="";
  if(c)document.querySelector('[data-t="data"]').click(),$("#f_n").scrollIntoView({behavior:"smooth"})}
 async function saveForm(){const n=$("#f_n").value.trim(),a=$("#f_a").value.trim(),noT=$("#f_t").value==="0";if(!n||(!a&&!noT)){$("#fstat").textContent="Bitte Name und Adresse angeben.";return}
  const id=+$("#f_id").value||0;let c=id?C.find(x=>x.id==id):null;const isNew=!c;const oldA=c?c.a:"";
  if(!c){c={id:Math.max(0,...C.map(x=>x.id))+1,on:1,la:0,lo:0,beg:isoToday()};C.push(c)}
- const einr=$("#f_einr").value.trim();c.n=einr?`${n} (${einr})`:n;c.a=a||"mobiles Büro";c.r=$("#f_r").value;c.bank=$("#f_bank").value.trim();c.note=$("#f_note").value.trim();c.bdue=$("#f_bdue").value||"";c.beg=$("#f_beg").value||c.beg||"";c.wf=$("#f_wf").value||"";c.ml=$("#f_ml").checked?1:0;c.noCall=$("#f_nc").checked?1:0;c.noPhone=$("#f_np").checked?1:0;
+ const einr=$("#f_einr").value.trim();c.n=einr?`${n} (${einr})`:n;c.a=a||"mobiles Büro";c.r=$("#f_r").value;c.bank=$("#f_bank").value.trim();c.note=$("#f_note").value.trim();c.bdue=$("#f_bdue").value||"";c.beg=$("#f_beg").value||c.beg||"";c.wf=$("#f_wf").value||"";c.ml=$("#f_ml").checked?1:0;c.noCall=$("#f_nc").checked?1:0;c.noPhone=$("#f_np").checked?1:0;c.noInv=$("#f_ni").checked?1:0;TASK=TASK.filter(t=>!(c.noInv&&t.inv&&!t.done&&t.cid==c.id));
  c.e=einr?"E":(isNew?"W":c.e);if(isNew){const nN=chkTasks("N",c);setTimeout(()=>flash(`🆕 ${nN} Aufgaben der Neuaufnahme-Checkliste unter To-dos angelegt.`),2200)}
  if(a&&(isNew||oldA!==a)){$("#fstat").textContent="Ermittle Lage der Adresse …";const g=await geocode(a);
   if(g){c.la=g[0];c.lo=g[1];c.geo=1}else if(isNew&&!noT){C.pop();$("#fstat").textContent="Adresse nicht gefunden – bitte Schreibweise prüfen (Straße Nr., PLZ Ort). Internet nötig.";return}}
@@ -211,14 +212,15 @@ function snRe(c){const sn=c.n.split(" (")[0].split(" ").pop().toLowerCase().repl
 const OFFS=/gericht|anhörung|behörde|\bamt\b|ämter|jobcenter|anwalt|kanzlei|notar|fahrt|termin mit|ohne klient/i;const offW=w=>ARTD.has(w.art||"")||OFFS.test(w.t||"");
 function dayClients(ds){const R=[];act().forEach(c=>{const w=WK.find(x=>x.cid==c.id&&x.d==ds&&!offW(x));if(w){R.push({c,v:w.v,src:"app"});return}const re=snRe(c);const e=re&&calEv().find(e=>e.d==ds&&re.test(e.t)&&!OFFS.test(e.t));if(e)R.push({c,v:e.v,src:"cal"})});return R}
 let AUTOD=null;function goPlan(cid,ds,v){const c=C.find(x=>x.id==cid);$("#ziel").value=cid;$("#zq").value=c.n;here=null;FREEZ=null;LASTZ=cid;PICK=new Set();PB=null;FIRSTA="";REV=0;EXS=[];MODE="weg";RDATE=ds||isoD(addD(today(),1));RTIME=v||"11:00";AUTOD=null;window.AUTOT=null;closeDlg();document.querySelector('[data-t="go"]').click();renderGo();flash("Termin-Tag gewählt – unter „Vorschläge“ mit ➕ dazunehmen, dann „📌 Einplanen“.")}
-function invTask(w){if(!w||!w.cid||TASK.some(x=>x.inv==w.id))return;const c=C.find(x=>x.id==w.cid);TASK.push({id:Date.now()+Math.floor(Math.random()*999),txt:`✉️ Termineinladung versenden: ${w.art||"Besuch"} am ${dmy(w.d)}${w.v?" um "+w.v+" Uhr":""}`,cid:w.cid,bank:"",mit:0,plan:isoToday(),pt:0,done:0,dd:"",ts:nowISO(),inv:w.id})}
+const noInv=c=>c.noInv!==undefined?!!c.noInv:!!c.noPhone;
+function invTask(w){if(!w||!w.cid||TASK.some(x=>x.inv==w.id))return;const c=C.find(x=>x.id==w.cid);if(!c||noInv(c))return;TASK.push({id:Date.now()+Math.floor(Math.random()*999),txt:`✉️ Termineinladung versenden: ${w.art||"Besuch"} am ${dmy(w.d)}${w.v?" um "+w.v+" Uhr":""}`,cid:w.cid,bank:"",mit:0,plan:isoToday(),pt:0,done:0,dd:"",ts:nowISO(),inv:w.id})}
 function invText(t){const w=WK.find(x=>x.id==t.inv)||{};const c=C.find(x=>x.id==t.cid)||{n:"",a:""};const wd=w.d?new Date(w.d+"T12:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";const f=(_H&&_H.firma)||""||"";
  return `Terminbestätigung\n\nGuten Tag,\n\nhiermit bestätige ich unseren Termin:\n\n${w.art||"Besuch"} – ${c.n.split(" (")[0]}\n${wd}${w.v?", "+w.v+" Uhr":""}\n${c.a||""}\n\nSollte der Termin nicht passen, melden Sie sich bitte rechtzeitig.\n\nMit freundlichen Grüßen\n${f}`}
 function invSend(id){const t=TASK.find(x=>x.id==id);if(!t)return;const s=invText(t);const done=()=>{t.done=1;t.dd=nowISO();save();renderAll();flash("✉️ Einladung versendet – Aufgabe erledigt.")};
  if(navigator.share)navigator.share({title:"Terminbestätigung",text:s}).then(done).catch(e=>{if(!(e&&e.name=="AbortError"))location.href="mailto:?subject="+enc("Terminbestätigung")+"&body="+enc(s)});
  else{location.href="mailto:?subject="+enc("Terminbestätigung")+"&body="+enc(s);setTimeout(()=>{if(confirm("Einladung verschickt? Dann Aufgabe als erledigt markieren."))done()},1500)}}
-const INVLEAD=7;function tourInvites(){if(RO)return;const td=today(),lim=addD(td,INVLEAD);let n=0;
- schedTours().filter(x=>x.t&&x.d>=td&&x.d<=lim).forEach(x=>{const ds=isoD(x.d);const r=optimize(x.t);r.order.forEach(s=>s.cl.forEach(c=>{const key="T|"+ds+"|"+c.id;if(TASK.some(t=>t.inv==key))return;if(TASK.some(t=>t.cid==c.id&&t.inv&&String(t.inv)!=key&&(WK.find(w=>w.id==t.inv)||{}).d==ds))return;
+const INVLEAD=7;function tourInvites(){if(RO)return;{const b=TASK.length;TASK=TASK.filter(t=>!(t.inv&&!t.done&&t.cid&&(c=>c&&noInv(c))(C.find(c=>c.id==t.cid))));if(TASK.length!=b)save()}const td=today(),lim=addD(td,INVLEAD);let n=0;
+ schedTours().filter(x=>x.t&&x.d>=td&&x.d<=lim).forEach(x=>{const ds=isoD(x.d);const r=optimize(x.t);r.order.forEach(s=>s.cl.forEach(c=>{if(noInv(c))return;const key="T|"+ds+"|"+c.id;if(TASK.some(t=>t.inv==key))return;if(TASK.some(t=>t.cid==c.id&&t.inv&&String(t.inv)!=key&&(WK.find(w=>w.id==t.inv)||{}).d==ds))return;
   TASK.push({id:Date.now()+n,txt:`✉️ Termineinladung versenden: Tour ${x.t} am ${dmy(ds)} (Besuch ab ca. 11 Uhr)`,cid:c.id,bank:"",mit:0,plan:isoToday(),pt:0,done:0,dd:"",ts:nowISO(),inv:key});n++}))});if(n)save()}
 let CALOK=S.get("ta2_calok",[]);
 function pastItems(){const td=isoToday(),lim=isoD(addD(today(),-21)),now=nowHM();const done=(cid,d)=>(LOG[cid]||[]).some(e=>e.d==d&&e.typ!="A");const R=[];
