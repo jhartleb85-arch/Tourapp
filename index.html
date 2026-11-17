@@ -108,7 +108,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=123;
+const APPV=124;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -749,7 +749,7 @@ function taskEdit(id){const t=TASK.find(x=>x.id==id);if(!t)return;$("#dlgc").inn
  <div class="row"><div><label for="te_p">Termin / fällig</label><input type="date" id="te_p" value="${t.plan||""}"></div><div><label for="te_b">Bank (optional)</label><input id="te_b" value="${h(t.bank||"")}"></div></div>
  <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:15px"><input type="checkbox" id="te_m" style="width:auto"${t.mit?" checked":""}> 🎒 auf Tour mitnehmen</label>
  <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:15px"><input type="checkbox" id="te_bu" style="width:auto"${t.buero?" checked":""}> 👩‍💼 Aufgabe fürs Büro</label>
- <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:15px"><input type="checkbox" id="te_d" style="width:auto"${t.done?" checked":""} onchange="$('#te_dd').disabled=!this.checked"> ✓ erledigt am</label><input type="date" id="te_dd" value="${(t.dd||"").slice(0,10)||isoToday()}"${t.done?"":" disabled"}>
+ <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:15px"><input type="checkbox" id="te_d" style="width:auto"${t.done?" checked":""}> ✓ erledigt am</label><input type="date" id="te_dd" value="${(t.dd||"").slice(0,10)||isoToday()}" onchange="$('#te_d').checked=true"><div class="hint" style="margin-top:2px">Datum ändern setzt den Haken automatisch.</div>
  <div style="margin-top:10px"><button class="btn" onclick="taskEditSave(${id})">Speichern</button><button class="btn g" onclick="closeDlg()">Abbrechen</button><button class="btn w" onclick="closeDlg();taskDel(${id})">Löschen</button></div>`;$("#dlg").hidden=false}
 function taskEditSave(id){const t=TASK.find(x=>x.id==id);if(!t)return;const tx=$("#te_t").value.trim();if(!tx){flash("Bitte einen Text eingeben.");return}t.txt=tx;t.cid=+$("#te_c").value||0;const np=$("#te_p").value;if(np!=t.plan){t.plan=np;t.pt=0}t.bank=$("#te_b").value.trim();t.mit=$("#te_m").checked?1:0;t.buero=$("#te_bu").checked?1:0;if($("#te_d").checked){t.done=1;t.dd=$("#te_dd").value||isoToday()}else{t.done=0;t.dd=""}save();closeDlg();renderAll();flash("Aufgabe gespeichert.")}
 function taskDate(id){const t=TASK.find(x=>x.id==id);if(!t)return;const v=prompt("Neues Datum (TT.MM.JJJJ) – leer = ohne Termin:",t.plan?dmy(t.plan):"");if(v===null)return;if(!v.trim()){t.plan="";t.pt=0}else{const m=v.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/);if(!m){flash("Datum bitte als TT.MM.JJJJ.");return}const y=m[3]?(m[3].length==2?"20"+m[3]:m[3]):String(today().getFullYear());t.plan=`${y}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;const s=schedTours().find(x=>isoD(x.d)==t.plan);t.pt=s?s.t:0}save();renderAll()}
