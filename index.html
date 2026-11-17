@@ -108,7 +108,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=126;
+const APPV=127;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -133,7 +133,9 @@ function perms(a){if(a.length<=1)return[a];const r=[];a.forEach((x,i)=>perms([..
 function optimize(t){const st=stopsOf(t);if(!st.length)return{order:[],km:0,inE:"",outE:"",hrs:0,pers:0};
  const reg=region(st),ex=Object.entries(region(st)=="N"?{...EX.N,...EX.W}:EX[reg]);let best=null;
  const cand=st.length<=7?perms(st):(()=>{let o=[...st];let imp=true;while(imp){imp=false;for(let i=0;i<o.length-1;i++)for(let j=i+1;j<o.length;j++){const n=[...o.slice(0,i),...o.slice(i,j+1).reverse(),...o.slice(j+1)];if(pathLen(n,ex[0][1],ex[0][1])<pathLen(o,ex[0][1],ex[0][1])){o=n;imp=true}}}return[o,[...o].reverse()]})();
- for(const o of cand)for(const [an,a] of ex)for(const [bn,b] of ex){const L=pathLen(o,a,b);if(!best||L<best.L)best={L,o,an,bn,a,b}}
+ if(reg=="W"){const cm=(a,b)=>dist(a,b)*1.3/22*60,hw=km=>km*1.2/80*60,wl=dist(HOME,WP.KOST)+dist(WP.KOST,WP.KSUED)+dist(WP.KSUED,WP.MASCH)+dist(WP.MASCH,WP.ELB);const G=ex.map(([n,p])=>[n,p,hw(wl+dist(WP.ELB,p))]).concat([["Stadt (Horn)",WP.HORN,hw(dist(HOME,WP.KOST)+dist(WP.KOST,WP.HORN))]]);
+  for(const o of cand){let mid=0;for(let i=0;i<o.length-1;i++)mid+=cm(o[i].p,o[i+1].p);for(const [an,a,ta] of G)for(const [bn,b,tb] of G){const L=ta+cm(a,o[0].p)+mid+cm(o[o.length-1].p,b)+tb;if(!best||L<best.L)best={L,o,an,bn,a,b}}}}
+ else for(const o of cand)for(const [an,a] of ex)for(const [bn,b] of ex){const L=pathLen(o,a,b);if(!best||L<best.L)best={L,o,an,bn,a,b}}
  const pers=st.reduce((s,x)=>s+x.cl.length,0),hrs=(pers*45+st.length*10)/60;
  const far=reg=="O"?95:reg=="N"?170:140;
  return{order:best.o,km:loopKm(best.o.map(s=>s.p)),inE:best.an,outE:best.bn,hrs,pers,reg}}
