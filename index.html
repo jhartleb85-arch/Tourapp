@@ -108,7 +108,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=117;
+const APPV=118;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -785,7 +785,7 @@ function goTaskCard(z,TM){const ids=new Set([z&&z.id,...(TM||[]).map(c=>c.id)].f
 // ---- Heute erledigt ----
 function doneToday(){const td=isoToday(),R=[];C.forEach(c=>(LOG[c.id]||[]).forEach((e,i)=>{if(e.d==td)R.push({t:e.von||(e.ts?e.ts.slice(11,16):""),c,e,i})}));TASK.filter(t=>t.done&&t.dd&&t.dd.slice(0,10)==td).forEach(t=>R.push({t:t.dd.slice(11,16),task:t}));R.sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1);
  if(!R.length)return`<div class="card hint" style="padding:10px 14px">✅ Heute erledigt: noch nichts – Anrufe, Besuche und Erledigungen erscheinen hier mit Uhrzeit.</div>`;
- return`<div class="card"><h2>✅ Heute erledigt (${R.length})</h2>${R.map(x=>x.task?`<div class="c"><div style="min-width:0"><div class="n">${x.t||"–"} · ✓ ${h(x.task.txt)}</div><div class="m">Erledigung${x.task.bank?" · 🏦 "+h(x.task.bank):""}</div></div></div>`:`<div class="c"><div style="min-width:0"><div class="n">${x.t||"–"} · ${h(x.c.n.split(" (")[0])}</div><div class="m">${h(x.e.art||(x.e.typ=="A"?"Anruf":"Besuch"))}${mins(x.e)?" · "+mins(x.e)+" Min.":""}${x.e.txt?" · "+h(x.e.txt.slice(0,70))+(x.e.txt.length>70?"…":""):""}</div></div><button class="btn g" style="margin:0" aria-label="bearbeiten" onclick="openDlg(${x.c.id},'B',${x.i})">✏️</button></div>`).join("")}</div>`}
+ return`<div class="card"><h2>✅ Heute erledigt (${R.length})</h2>${R.map(x=>x.task?`<div class="c"><div style="min-width:0"><div class="n">${x.t||"–"} · ✓ ${h(x.task.txt)}</div><div class="m">${(()=>{const t=x.task;let id=t.cid;if(!id&&typeof t.inv=="string"&&t.inv.startsWith("T|"))id=+t.inv.split("|")[2];if(!id&&t.inv){const w=WK.find(w=>w.id==t.inv);if(w)id=w.cid}const c=id&&C.find(c=>c.id==id);return c?"👤 <b>"+h(c.n.split(" (")[0])+"</b> · ":""})()}Erledigung${x.task.bank?" · 🏦 "+h(x.task.bank):""}</div></div><button class="btn g" style="margin:0" aria-label="bearbeiten" onclick="taskEdit(${x.task.id})">✏️</button></div>`:`<div class="c"><div style="min-width:0"><div class="n">${x.t||"–"} · ${h(x.c.n.split(" (")[0])}</div><div class="m">${h(x.e.art||(x.e.typ=="A"?"Anruf":"Besuch"))}${mins(x.e)?" · "+mins(x.e)+" Min.":""}${x.e.txt?" · "+h(x.e.txt.slice(0,70))+(x.e.txt.length>70?"…":""):""}</div></div><button class="btn g" style="margin:0" aria-label="bearbeiten" onclick="openDlg(${x.c.id},'B',${x.i})">✏️</button></div>`).join("")}</div>`}
 // ---- Berichte ----
 function berDue(c){return c.bdue||""}
 function berichtFor(id){const c=C.find(x=>x.id==id);if(!c)return;show("prot");renderProt();const bis=c.bdue||isoToday();const v=addD(new Date(bis+"T00:00"),-365);v.setDate(v.getDate()+1);$("#p_von").value=isoD(v);$("#p_bis").value=bis;$("#p_kl").value=String(id);pdfBericht()}
