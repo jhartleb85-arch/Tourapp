@@ -108,7 +108,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=120;
+const APPV=121;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -550,7 +550,7 @@ function renderTodo(){const el=$("#todo");if(!el)return;const D=todoData(),d=tod
  o+=invCard();
  if(D.W.length)o+=`<div class="card"><h2>📌 Wiedervorlagen bis ${fmt(addD(d,7))} (${D.W.length})</h2>${D.W.map(([c,e,i])=>`<div class="c"><div style="min-width:0"><div class="n">${h(e.wv)}</div><div class="m">${h(c.n.split(" (")[0])}${e.wvd?` · <b style="color:${e.wvd<isoD(d)?"var(--warn)":"inherit"}">bis ${dmy(e.wvd)}</b>`:""}</div></div><button class="btn g" style="margin:0" onclick="wvDone(${c.id},${i})">✓</button></div>`).join("")}</div>`;
  o+=berCard();
- o+=`<div class="card" id="td_calls"><h2>📞 Anrufe fällig (${D.calls.length})${wd==5?" – heute ist Anruftag":""}</h2>${D.calls.map(x=>cardC(x[0])).join("")||'<div class="hint">Keine Anrufe fällig.</div>'}</div>`;
+ o+=`<div class="card" id="td_calls"><h2>📞 Anrufe fällig (${D.calls.length})${wd==5?" – heute ist Anruftag":""}</h2>${D.calls.map(x=>cardC(x[0])).join("")||'<div class="hint">Keine Anrufe fällig.</div>'}${(()=>{const P=preCalls();return P.length?`<details style="margin-top:8px"><summary class="m" style="cursor:pointer;font-weight:700">🔭 Bald fällige Anrufe – nächste 2 Monate (${P.length})</summary>${P.map(([c,p])=>`<div class="c"><div style="min-width:0"><div class="n" style="font-size:15px">${h(c.n.split(" (")[0])}</div><div class="m">fällig bis ${fmt(addD(today(),p.dd))}${p.nt?" · Tour "+c.t+" am "+fmt(p.nt):""}</div></div><button class="btn g" style="margin:0;min-width:44px;padding:0 8px" aria-label="Anruf erfassen" onclick="FABT='A';fabOpen(${c.id})">📞</button></div>`).join("")}</details>`:""})()}</div>`;
  if(D.VV.length)o+=`<div class="card"><h2>🚗 Besuch nötig – nur persönlich (${D.VV.length})</h2>${D.VV.map(x=>cardV(x[0])).join("")}</div>`;
  o+=taskCard()+bueroCard();
  if(D.unk.length)o+=`<div class="card"><h2>❓ Letzter Kontakt fehlt (${D.unk.length})</h2>${D.unk.map(x=>cardS(x[0])).join("")}</div>`;
