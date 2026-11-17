@@ -108,7 +108,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=119;
+const APPV=120;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -659,7 +659,7 @@ function renderWoche(){const mo=monday(WOFF),days=[0,1,2,3,4].map(i=>addD(mo,i))
    if(i==4){const calls=A.filter(x=>x[1].kind=="A"||x[1].call);const W=[];C.forEach(c=>(LOG[c.id]||[]).forEach(e=>{if(e.wv&&!e.done&&e.wvd&&e.wvd<=fr)W.push(`${nm(c)}: ${e.wv}`)}));
     b+=`<div class="n">📞 Anruftag (${calls.length})</div>${calls.length?`<div class="m">${h(calls.map(x=>nm(x[0])).join(", "))}</div><a class="btn g" target="_blank" href="${friCal(calls.map(x=>x[0]))}">📅 Anrufliste in Kalender</a>`:'<div class="m">Keine Anrufe fällig.</div>'}
     ${W.length?`<div class="n" style="margin-top:6px">📌 Wiedervorlagen bis Freitag</div><div class="m">${h(W.join("; "))}</div>`:""}
-    <div class="n" style="margin-top:6px">✔ Wochenabschluss</div><div class="m">Kontakte eingetragen? · Wiedervorlagen abgehakt? · Fahrt im Fahrtenbuch? · „📋 Wochenplanung für Claude kopieren“</div>`}}
+    <div class="n" style="margin-top:6px">✔ Wochenabschluss</div><div class="m">Kontakte eingetragen? · Wiedervorlagen abgehakt? · Fahrt im Fahrtenbuch? · „📋 Wochenplanung für Claude kopieren“</div><button class="btn" style="margin-top:6px" onclick="backupAll()">💾 Wochensicherung jetzt</button>`}}
   {const ce=calEv().filter(e=>ds>=e.d&&ds<=(e.bis||e.d));const allD=ce.filter(e=>!e.v||(e.bis&&e.bis!=e.d));const M=ce.filter(e=>!allD.includes(e)).map(e=>({v:e.v,b:e.b,t:e.t,cal:1,k:ck(e)})).concat(items.map(x=>({v:x.v,b:x.b,t:x.t,id:x.id}))).sort((a,b)=>(a.v||"99")<(b.v||"99")?-1:(a.v||"99")>(b.v||"99")?1:0);
   if(allD.length)b+=`<div class="m" style="margin-top:8px">📅 ${h(allD.map(e=>e.t).join(" · "))}</div>`;
   if(M.length)b+=`<div style="margin-top:6px">${M.map(x=>`<div class="c" style="padding:4px 0"><span>${x.v?`<b>${x.v}${x.b?"–"+x.b:""}</b> `:""}${h(x.t)}${x.cal?' <span class="m" style="font-size:12px">· Google</span>':""}</span><span style="white-space:nowrap">${x.cal?`<button class="btn g" style="margin:0;min-width:44px;padding:0 8px" aria-label="ändern" onclick="calEdit('${h(x.k).replace(/'/g,"\\'")}')">✏️</button>`:`<button class="btn g" style="margin:0" aria-label="ändern" onclick="wkEdit(${x.id})">✏️</button><a class="btn g" style="margin:0 0 0 4px" target="_blank" href="${gTerm(x.t,ds,x.v,60,"")}">📅</a>`}</span></div>`).join("")}</div>`;}
