@@ -109,9 +109,9 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=131;
+const APPV=132;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
-function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;
+function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
   ["bank","r","note","a","la","lo","geo","e","on","why","end","t","noCall","noPhone","n","beg","wf","ml","bdue","grp"].forEach(k=>{if(u[k]!==undefined)c[k]=u[k]});
   if(u.replcal&&LOG[c.id])LOG[c.id]=LOG[c.id].filter(e=>e.src!="cal");(u.log||[]).forEach(e=>{const L=(LOG[c.id]=LOG[c.id]||[]);if(!L.some(x=>x.d==e.d&&x.typ==e.typ))L.push(e)});n++}));
@@ -198,9 +198,9 @@ function prioC(c){const p=plan(c);let v=p.kind=="U"?3:p.dd<-180?2:p.dd<0?1:0;con
 function prio(t){return act().filter(c=>c.t==t).reduce((s,c)=>s+prioC(c),0)}
 function sortOrd(){S.set("ta2_ordman",1);const n=tourCount();ORD=[...Array(n)].map((_,i)=>i+1).sort((a,b)=>prio(b)-prio(a)||a-b);SCHC=null;save();renderAll();renderCal();flash("Touren nach Dringlichkeit sortiert: "+ORD.map(x=>"T"+x).join(" → "))}
 function moveOrd(i,d){S.set("ta2_ordman",1);const o=ordList();const j=i+d;if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];ORD=o;SCHC=null;save();renderAll();renderCal()}
-let SCHC=null;function schedTours(){if(!START)return[];if(SCHC&&SCHC.k==START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD))return SCHC.v;const OL=ordList();const [y,m,dd]=START.split("-").map(Number);let d=new Date(y,m-1,dd),idx=0;const out=[];
- for(let i=0;i<160;i++){const br=blockReason(d);if(br){out.push({d,t:0,skip:br})}else{const pos=idx%12;out.push({d,t:pos<tourCount()?OL[pos]:0,buf:pos>=tourCount()});idx++}d=addD(d,7)}
- SCHC={k:START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD),v:out};return out}
+let SCHC=null;function schedTours(){if(!START)return[];const HAS=new Set(act().map(c=>c.t).filter(Boolean)),hk=[...HAS].sort().join(",");if(SCHC&&SCHC.k==START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD)+hk)return SCHC.v;const OL=ordList();const [y,m,dd]=START.split("-").map(Number);let d=new Date(y,m-1,dd),idx=0;const out=[];
+ for(let i=0;i<160;i++){const br=blockReason(d);if(br){out.push({d,t:0,skip:br})}else{const pos=idx%12;{const tt=pos<tourCount()&&HAS.has(OL[pos])?OL[pos]:0;out.push({d,t:tt,buf:!tt})}idx++}d=addD(d,7)}
+ SCHC={k:START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD)+hk,v:out};return out}
 function nextTour(t,from){if(!START||!t)return null;const f=from||today();const x=schedTours().find(s=>s.t==t&&s.d>=f);return x?x.d:null}
 function contacts(c){const td=isoToday();return (LOG[c.id]||[]).filter(e=>e.d<=td).slice().sort((a,b)=>a.d<b.d?1:-1)}
 let CALHIDE=S.get("ta2_calhide",[]);const ck=e=>e.d+"|"+(e.v||"")+"|"+e.t;const calEv=()=>{const G=new Set(WK.filter(w=>w.gid).map(w=>w.gid));return(CAL.ev||[]).filter(e=>!CALHIDE.includes(ck(e))&&!(e.gid&&G.has(e.gid)))};
