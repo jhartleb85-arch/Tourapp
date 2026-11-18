@@ -109,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=139;
+const APPV=140;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -636,13 +636,16 @@ function renderHeute(){tourInvites();const d=today(),wd=d.getDay(),A=act().map(c
  if(RO)o=`<div class="card" style="background:var(--softw)"><b>👁 Nur-Ansehen-Modus</b> – auf diesem Gerät wird nichts gespeichert. Ausschalten unter Mehr → Dieses Gerät.</div>`+o;
  $("#heute").innerHTML=o}
 function weekText(){const d=today(),A=act().map(c=>[c,plan(c)]);const nm=c=>c.n.replace(/ \((?!Ehe)[^)]*\)$/,"");const nxt=schedTours().filter(x=>x.d>=d&&x.t).slice(0,2);
- const L=[`Wochenplanung – Stand ${dmy(isoD(d))} (Tour-App Version ${UPD.v}, ${act().length} aktive Klienten)`];
+ const L=[`Wochenplanung – Stand ${dmy(isoD(d))} (App ${APPV} · Daten ${Math.max(UPD.v||0,S.get("ta2_updv",0))}, ${act().length} aktive Klienten)`];
  nxt.forEach(x=>{const r=optimize(x.t);L.push(`Nächste Tour: Tour ${x.t} am ${dmy(isoD(x.d))} – ${tnames[x.t-1]||""}: ${r.order.map(s=>s.cl.map(nm).join("+")).join(", ")}`)});
  const g=(k,t)=>{const X=A.filter(x=>x[1].kind==k);if(X.length)L.push(`${t} (${X.length}): `+X.map(x=>nm(x[0])+(x[0].t?" [T"+x[0].t+"]":" [Büro]")+(x[1].nt?" Tour "+fmt(x[1].nt):"")).join("; "))};
  g("V","Besuch nötig, nicht telefonisch erreichbar");g("A","Anrufe fällig");g("B","Besuche über Tour geplant");g("U","Letzter Kontakt unbekannt");
  const W=[];C.forEach(c=>(LOG[c.id]||[]).forEach(e=>{if(e.wv&&!e.done)W.push(`${nm(c)}: ${e.wv}${e.wvd?" bis "+dmy(e.wvd):""}`)}));if(W.length)L.push("Wiedervorlagen: "+W.join("; "));
  const off=act().filter(c=>!c.t);if(off.length)L.push("Ohne Tour (Sprechstunde/Telefon): "+off.map(c=>nm(c)+" – "+plan(c).txt.replace(/<[^>]+>/g,"")).join("; "));
  const wk=WK.filter(x=>x.d>=isoD(monday(0))&&x.d<=isoD(addD(monday(1),4)));if(wk.length)L.push("Eigene Termine: "+wk.map(x=>dmy(x.d)+(x.v?" "+x.v:"")+" "+x.t).join("; "));
+ {const cn=t=>{const c=C.find(c=>c.id==t.cid);return c?nm(c)+": ":""};const tx=t=>cn(t)+t.txt+(t.bank?" ["+t.bank+"]":"")+(t.plan?" fällig "+dmy(t.plan)+(t.pt?" (Tour "+t.pt+")":""):" ohne Termin");
+ const O=TASK.filter(t=>!t.done&&!t.inv);if(O.length)L.push(`Erledigungen offen (${O.length}): `+O.map(t=>tx(t)+(t.buero?" [Büro]":"")).join("; "));
+ const R=TASK.filter(t=>t.done&&!t.inv&&(t.dd||"")>=isoD(addD(d,-14)));if(R.length)L.push(`Erledigungen erledigt (14 Tage): `+R.map(t=>tx(t)+" – erledigt "+dmy((t.dd||"").slice(0,10))).join("; "))}
  if(BLK.length)L.push("Gesperrt/Urlaub: "+BLK.map(b=>dmy(b.von)+"–"+dmy(b.bis)+" "+b.grund).join("; "));return L.join("\n")}
 function copyWeek(){const s=weekText();const ta=$("#wkt");ta.value=s;ta.hidden=false;const ok=()=>flash("Kopiert – jetzt im Chat mit Claude einfügen.");
  if(navigator.clipboard)navigator.clipboard.writeText(s).then(ok,()=>{ta.select();flash("Bitte den Text im Feld markieren und kopieren.")});else{ta.select();flash("Bitte den Text im Feld markieren und kopieren.")}}
