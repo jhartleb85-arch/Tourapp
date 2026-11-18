@@ -109,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=133;
+const APPV=134;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -291,7 +291,7 @@ function openDlg(id,typ,idx){WKDONE=0;const c=C.find(x=>x.id==id);const e=idx!=n
 function saveDlg(id,idx){const art=$("#k_art").value,d=$("#k_d").value;if(!d){flash("Bitte ein Datum angeben.");return}
  if(d>isoToday()&&idx==null){if(!okDay(d))return;const c=C.find(x=>x.id==id),tx=$("#k_txt").value.trim(),kv=$("#k_von").value;WK.push({id:Date.now(),d,v:$("#k_von").value,b:$("#k_bis").value,t:art+" "+c.n.split(" (")[0]+(tx?" – "+tx:""),cid:id,art});invTask(WK[WK.length-1]);save();closeDlg();renderAll();goPlan(id,d,kv||"");flash(`📅 ${art} am ${dmy(d)} eingeplant – jetzt schauen, wen du auf dem Weg mitnimmst.`);return}
  const e={ts:idx!=null?(LOG[id][idx].ts||""):nowISO(),d,typ:typOf(art),art,von:$("#k_von").value,bis:$("#k_bis").value,anw:$("#k_anw").value.trim(),txt:$("#k_txt").value.trim(),wv:$("#k_wv").value.trim(),wvd:$("#k_wvd").value};
- if(idx!=null){e.done=LOG[id][idx].done;LOG[id][idx]=e}else{(LOG[id]=LOG[id]||[]).push(e);delete RUN[id];mirrorVisit(id,e)}if(WKDONE){const w=WK.find(x=>x.id==WKDONE);if(w&&w.cid==id&&w.d<=d)WK=WK.filter(x=>x.id!=WKDONE);WKDONE=0}
+ if(idx!=null){e.done=LOG[id][idx].done;LOG[id][idx]=e}else{(LOG[id]=LOG[id]||[]).push(e);delete RUN[id];mirrorVisit(id,e)}if(WKDONE){const w=WK.find(x=>x.id==WKDONE);if(w&&w.cid==id&&w.d<=d){w.ok=1;w.d=d}WKDONE=0}
  save();closeDlg();renderAll();const m=mins(e);flash(`${art} am ${dmy(d)} gespeichert${m?" ("+m+" Min.)":""}.${e.wv?" Wiedervorlage steht unter „Kontakte“.":""}`)}
 function startRun(id){RUN[id]=new Date().toISOString();save();closeDlg();renderAll();flash("⏱ Besuch läuft – am Ende beim Klienten auf „⏹ Besuch beenden“ tippen.")}
 function delEntry(id,idx){LOG[id].splice(idx,1);save();openHist(id);renderAll()}
@@ -673,7 +673,7 @@ function renderWoche(){const mo=monday(WOFF),days=[0,1,2,3,4].map(i=>addD(mo,i))
  o+=`<div class="hint" style="margin:-4px 4px 10px">Kalenderstand: ${CAL.at?dmy(CAL.at)+(S.get("ta2_calts",0)?", "+hm(new Date(S.get("ta2_calts",0)))+" Uhr":""):"noch nicht abgeglichen"}${gcid()?" · gleicht automatisch ab (alle 2 Std. beim ersten Tippen)":""}${gcid()?` <button class="chip" onclick="calSync()">🔄 jetzt abgleichen</button>`:" – Claude gleicht bei jeder Wochenplanung neu ab (oder Mehr → Kalender-Verbindung)."}</div>`;
  if(WOFF)o+=`<div style="text-align:center;margin:-4px 0 8px"><button class="btn g" onclick="WOFF=0;renderWoche()">zur aktuellen Woche</button></div>`;
  days.forEach((d,i)=>{const ds=isoD(d),hol=holidays(d.getFullYear())[ds],blk=BLK.find(x=>ds>=x.von&&ds<=x.bis),isT=ds==isoToday();
-  const items=WK.filter(x=>x.d==ds).sort((a,b)=>(a.v||"99")<(b.v||"99")?-1:1);const done=[];if(ds<=isoToday())C.forEach(c=>(LOG[c.id]||[]).forEach(e=>{if(e.d==ds)done.push([c,e])}));
+  const items=WK.filter(x=>x.d==ds&&!(!x.cid&&/^🚗\s*Tour\s*\d/.test(x.t||"")&&WK.some(w=>w.d==ds&&w.cid&&!offW(w)))).sort((a,b)=>(a.v||"99")<(b.v||"99")?-1:1);const done=[];if(ds<=isoToday())C.forEach(c=>(LOG[c.id]||[]).forEach(e=>{if(e.d==ds)done.push([c,e])}));
   let b="";
   if(hol||blk)b+=`<div class="big8" style="${blk&&!hol?"background:#f6bf26;color:#3a2d00;border-color:#d9a400":"background:var(--mut);border-color:var(--mut)"}">${hol?"Feiertag: "+h(hol):"🌴 "+h(blk.grund)}</div>`;
   else{
@@ -681,7 +681,7 @@ function renderWoche(){const mo=monday(WOFF),days=[0,1,2,3,4].map(i=>addD(mo,i))
    if(i==1){const sp=SP.filter(s=>s.d==ds);const inv=A.filter(([c,p])=>!c.noPhone&&c.e!="E"&&((!c.t&&(p.kind=="A"||p.kind=="U"))||(c.t&&nearCafe(c)&&p.kind=="A")));
     b+=`<div class="n">☕ Sprechstunde auf Anfrage</div>${sp.length?sp.map(s=>`<div class="m">✓ ${h(s.ort)} ${s.von}–${s.bis}: ${h(s.ids.map(id=>nm(C.find(c=>c.id==id)||{n:"?"})).join(", "))}</div>`).join(""):""}
     ${inv.length?`<div class="m">Einladen: ${h(inv.map(x=>nm(x[0])).join(", "))}</div>`:'<div class="m">Niemand dringend einzuladen.</div>'}`}
-   if(i==2){const st=schedTours().find(x=>isoD(x.d)==ds);if(st&&st.t){const r=optimize(st.t);const L=loopOrder({n:"",a:"",t:st.t},r.order[0].p);
+   if(i==2){const st=schedTours().find(x=>isoD(x.d)==ds);if(st&&st.t&&!WK.some(w=>w.d==ds&&w.cid&&!offW(w))){const r=optimize(st.t);const L=loopOrder({n:"",a:"",t:st.t},r.order[0].p);
      b+=`<div class="n">🚗 Tour ${st.t} – ${h(tnames[st.t-1]||"")}</div><div class="m">${h(r.order.map(s=>s.cl.map(nm).join(" + ")).join(" → "))}</div><div class="m">${r.pers} Pers. · vor Ort ca. ${r.hrs.toFixed(1).replace(".",",")} h · ca. ${r.km} km</div><button class="btn g" onclick="startTour(${st.t})">▶ planen</button><a class="btn g" target="_blank" href="${gTerm("Tour "+st.t+": "+(tnames[st.t-1]||""),ds,"11:00",Math.round(r.hrs*60+60),r.order.map((s,k)=>(k+1)+". "+s.cl.map(nm).join(" + ")+" – "+s.a).join("\n"))}">📅 Kalender</a>`}
     else if(st&&st.buf)b+=`<div class="n">Puffer-Mittwoch</div><div class="m">Frei für Nachholbesuche.</div>`;else if(!START)b+=`<div class="m">Kein Tourstart festgelegt.</div>`}
    if(i==3){const V=A.filter(x=>x[1].kind=="V").sort((a,b)=>a[1].dd-b[1].dd);b+=`<div class="n" style="margin-top:8px">Nachmittag: Puffer / Nottermine</div>${V.length?`<div class="m">Nachholbesuche vorschlagen (nicht telefonisch erreichbar):</div>${V.slice(0,6).map(([c])=>`<div class="c" style="padding:4px 0"><span class="m">${h(nm(c))} · Tour ${c.t}</span>${WK.some(w=>w.cid==c.id&&w.d>=mon&&w.d<=fr)?'<span class="tag okk">eingeplant</span>':`<button class="btn g" style="margin:0" onclick="wkPlan(${c.id},'${ds}')">+ einplanen</button>`}</div>`).join("")}`:""}`}
@@ -689,7 +689,7 @@ function renderWoche(){const mo=monday(WOFF),days=[0,1,2,3,4].map(i=>addD(mo,i))
     b+=`<div class="n">📞 Anruftag (${calls.length})</div>${calls.length?`<div class="m">${h(calls.map(x=>nm(x[0])).join(", "))}</div><a class="btn g" target="_blank" href="${friCal(calls.map(x=>x[0]))}">📅 Anrufliste in Kalender</a>`:'<div class="m">Keine Anrufe fällig.</div>'}
     ${W.length?`<div class="n" style="margin-top:6px">📌 Wiedervorlagen bis Freitag</div><div class="m">${h(W.join("; "))}</div>`:""}
     <div class="n" style="margin-top:6px">✔ Wochenabschluss</div><div class="m">Kontakte eingetragen? · Wiedervorlagen abgehakt? · Fahrt im Fahrtenbuch? · „📋 Wochenplanung für Claude kopieren“</div><button class="btn" style="margin-top:6px" onclick="backupAll()">💾 Wochensicherung jetzt</button>`}}
-  {const ce=calEv().filter(e=>ds>=e.d&&ds<=(e.bis||e.d));const allD=ce.filter(e=>!e.v||(e.bis&&e.bis!=e.d));const M=ce.filter(e=>!allD.includes(e)).map(e=>({v:e.v,b:e.b,t:e.t,cal:1,k:ck(e)})).concat(items.map(x=>({v:x.v,b:x.b,t:x.t,id:x.id,cid:x.cid}))).sort((a,b)=>(a.v||"99")<(b.v||"99")?-1:(a.v||"99")>(b.v||"99")?1:0);
+  {const pld=WK.some(w=>w.d==ds&&w.cid&&!offW(w)),ce=calEv().filter(e=>ds>=e.d&&ds<=(e.bis||e.d)&&!(pld&&/^🚗\s*Tour\s*\d/.test(e.t)));const allD=ce.filter(e=>!e.v||(e.bis&&e.bis!=e.d));const M=ce.filter(e=>!allD.includes(e)).map(e=>({v:e.v,b:e.b,t:e.t,cal:1,k:ck(e)})).concat(items.map(x=>({v:x.v,b:x.b,t:x.t,id:x.id,cid:x.cid}))).sort((a,b)=>(a.v||"99")<(b.v||"99")?-1:(a.v||"99")>(b.v||"99")?1:0);
   if(allD.length)b+=`<div class="m" style="margin-top:8px">📅 ${h(allD.map(e=>e.t).join(" · "))}</div>`;
   if(M.length)b+=`<div style="margin-top:6px">${M.map(x=>`<div class="c" style="padding:4px 0"><span>${x.v?`<b>${x.v}${x.b?"–"+x.b:""}</b> `:""}${h(x.t)}${x.cal?' <span class="m" style="font-size:12px">· Google</span>':""}</span><span style="white-space:nowrap">${x.cal?`<button class="btn g" style="margin:0;min-width:44px;padding:0 8px" aria-label="ändern" onclick="calEdit('${h(x.k).replace(/'/g,"\\'")}')">✏️</button>`:`<button class="btn g" style="margin:0" aria-label="ändern" onclick="wkEdit(${x.id})">✏️</button>${x.cid&&ds<=isoToday()?((LOG[x.cid]||[]).some(e=>e.d==ds&&e.typ!="A")?`<span class="m" style="color:var(--acc);font-weight:700;padding:0 6px">✓ erledigt</span>`:`<button class="btn g" style="margin:0 0 0 4px" onclick="wkDone(${x.id})">✓ Kontakt</button>`):""}`}</span></div>`).join("")}</div>`;}
   if(done.length)b+=`<div class="m" style="margin-top:6px">✓ Erledigt: ${h(done.map(([c,e])=>nm(c)+" ("+(e.art||(e.typ=="A"?"Anruf":"Besuch"))+")").join(", "))}</div>`;
