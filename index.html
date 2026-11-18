@@ -109,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=132;
+const APPV=133;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -460,6 +460,17 @@ function renderGo(){GO=true;const A=act();const r=+$("#rad").value;$("#radc").in
   ${TMODE?`<h2 style="margin-top:10px">Tour ${z.t}: ${h(tnames[z.t-1]||"")}</h2><div class="m">${h([z,...TM].map(c=>c.n.split(" (")[0]).join(", "))}</div><button class="btn g" onclick="PICK=new Set(${JSON.stringify(TM.map(c=>c.id))});renderGo()">ganze Tour</button><button class="btn g" onclick="PICK=new Set();renderGo()">nur ${h(z.n.split(" (")[0])}</button>`:""}
  </details></div>`;
  $("#out").innerHTML=o;GO=false;loadBanks(p,$("#banks"),new Set([z&&z.bank,...A.filter(c=>PICK.has(c.id)).map(c=>c.bank),...due.map(x=>x.c.bank)]),z)}
+// ---- Tour-Optimierung: App schlägt selbst Zusammenlegungen vor ----
+let TADV=null;
+function tourAdvice(){const key=JSON.stringify(act().map(c=>[c.id,c.t,c.a]))+MAXH;if(TADV&&TADV.k==key)return TADV.v;const T=[...new Set(act().map(c=>c.t).filter(Boolean))];const base={};T.forEach(t=>base[t]=optimize(t));const S0=schedTours().filter(x=>x.d>=today()&&x.t);const nd=t=>{const x=S0.find(y=>y.t==t);return x?x.d:new Date(2100,0,1)};
+ const dis=S.get("ta2_tadvno",[]);let best=null;
+ for(let i=0;i<T.length;i++)for(let j=i+1;j<T.length;j++){const a=T[i],b=T[j];if(base[a].hrs+base[b].hrs>MAXH+0.3)continue;const k=[a,b].sort().join("+");if(dis.includes(k))continue;const cen=t=>{const P0=base[t].order.map(x=>x.p).filter(Boolean);return[P0.reduce((q,x)=>q+x[0],0)/P0.length,P0.reduce((q,x)=>q+x[1],0)/P0.length]};if(dist(cen(a),cen(b))>12)continue;
+  const into=nd(a)<=nd(b)?a:b,from=into==a?b:a;const mv=act().filter(c=>c.t==from);mv.forEach(c=>c.t=into);const m=optimize(into);mv.forEach(c=>c.t=from);
+  const save=base[a].km+base[b].km-m.km;if(m.hrs<=MAXH&&m.hrs+m.km/55<=8.7&&save>=60&&(!best||save>best.save))best={into,from,k,save,hrs:m.hrs,km:m.km,order:m.order.map(s=>s.cl.map(c=>c.n.split(" (")[0].split(" ").pop()).join("+")).join(" → ")}}
+ TADV={k:key,v:best};return best}
+function tadvCard(){const a=tourAdvice();if(!a)return"";const nm=t=>tnames[t-1]||("Tour "+t);return`<div class="card" style="border:2px solid var(--acc)"><h2>💡 Touren optimieren</h2><div class="n" style="font-size:15px">Tour ${a.from} in Tour ${a.into} aufnehmen?</div><div class="m">${h(nm(a.from))} + ${h(nm(a.into))}<br>Neue Reihenfolge: ${h(a.order)}<br><b>spart ca. ${a.save} km pro Zyklus</b> (≈ ${Math.round(a.save*52/12/10)*10} km im Jahr) · ein Mittwoch wird frei · vor Ort ca. ${a.hrs.toFixed(1).replace(".",",")} h, mit Fahrt ca. ${(a.hrs+a.km/55).toFixed(1).replace(".",",")} h</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="margin:0" onclick="tadvYes(${a.from},${a.into})">✓ Zusammenlegen</button><button class="btn g" style="margin:0" onclick="tadvNo('${a.k}')">Nein, so lassen</button></div></div>`}
+function tadvYes(from,into){const nf=tnames[from-1]||"",ni=tnames[into-1]||"";if(!confirm(`Tour ${from} in Tour ${into} aufnehmen?\n\nDie Personen aus Tour ${from} gehören dann zu Tour ${into}, der Termin von Tour ${from} wird ein freier Mittwoch.`))return;act().filter(c=>c.t==from).forEach(c=>c.t=into);const sh=x=>String(x).replace(/\s*\(.*$/,"").replace(/\s*–.*$/,"").trim();tnames[into-1]=(sh(ni)+" / "+sh(nf)).slice(0,60);tnames[from-1]="(frei – in Tour "+into+")";SCHC=null;TADV=null;save();renderAll();flash(`✓ Tour ${from} ist jetzt Teil von Tour ${into}.`)}
+function tadvNo(k){const d=S.get("ta2_tadvno",[]);d.push(k);S.set("ta2_tadvno",d);TADV=null;renderAll()}
 function startPlanned(ds){const pl=WK.filter(w=>w.d==ds&&w.cid&&!offW(w)&&!(LOG[w.cid]||[]).some(e=>e.d==ds&&e.typ!="A")).sort((a,b)=>(a.v||"99")<(b.v||"99")?-1:1);if(!pl.length)return;MODE="";goPlan(pl[0].cid,ds,pl[0].v);setTimeout(()=>{renderGo();const done=c=>(LOG[c]||[]).some(e=>e.d==ds&&e.typ!="A");[...PICK].forEach(id=>{if(done(id))PICK.delete(id)});pl.forEach(w=>PICK.add(w.cid));renderGo()},60)}
 function startTour(t){const ds=isoToday(),sch=schedTours().find(x=>isoD(x.d)==ds&&x.t==t);if(sch&&WK.some(w=>w.d==ds&&w.cid&&!offW(w)))return startPlanned(ds);const r=optimize(t);if(!r.order.length)return;MODE="tour";const c=r.order[0].cl[0];$("#ziel").value=c.id;$("#zq").value=c.n+" – Tour "+t;LASTZ=null;here=null;document.querySelector('[data-t="go"]').click();renderGo()}
 function insCost(p,t,skip){const r=optimize(t);const pts=r.order.filter(s=>!s.cl.some(c=>c.id==skip)).map(s=>s.p);if(!pts.length)return 99;let best=Math.min(dist(pts[0],p),dist(pts[pts.length-1],p));for(let i=0;i<pts.length-1;i++){const v=dist(pts[i],p)+dist(p,pts[i+1])-dist(pts[i],pts[i+1]);if(v<best)best=v}return best}
@@ -603,7 +614,7 @@ function renderHeute(){tourInvites();const d=today(),wd=d.getDay(),A=act().map(c
  o+=runC;
  {const ds=isoD(d),nT=calEv().filter(e=>ds>=e.d&&ds<=(e.bis||e.d)&&e.v).length+WK.filter(x=>x.d==ds).length,D=todoData(),nB=D.B.length,nBo=D.B.some(x=>x.due<isoD(d)),nTo=D.I.length+D.W.length+D.T.length+bueroTasks().length+D.VV.length;
   o+=`<div class="tiles"><button class="tile" onclick="goToday()"><b>${nT}</b><span>📅 Termine heute</span></button><button class="tile${calls.length?" w":""}" onclick="todoGo('td_calls')"><b>${calls.length}</b><span>📞 Anrufe fällig</span></button><button class="tile${nBo?" w":""}" onclick="todoGo('td_ber')"><b>${nB}</b><span>📄 Berichte${nBo?" überfällig":" bald"}</span></button><button class="tile" onclick="todoGo('')"><b>${nTo}</b><span>✅ To-dos</span></button></div>`}
- o+=invCard();o+=pastCard();
+ o+=tadvCard();o+=invCard();o+=pastCard();
  const spT=SP.filter(s=>s.d==isoD(d));if(spT.length)o+=`<div class="card"><h2>☕ Sprechstunde heute</h2>${spT.map(s=>`<div class="m" style="margin-bottom:4px">${h(s.ort)} · ${s.von}–${s.bis}${s.note?" · "+h(s.note):""}</div>${s.ids.map(id=>C.find(c=>c.id==id)).filter(Boolean).map(c=>`<div class="c"><div class="n">${h(c.n.split(" (")[0])}</div><button class="btn g" onclick="openHist(${c.id})">🗂 Gespräch eintragen / ändern</button></div>`).join("")}<button class="btn g" onclick="editSP(${s.id})">+ weitere Person</button>`).join("")}</div>`;
  if(runs.length)o+=`<div class="card"><h2>⏱ Läuft gerade</h2>${runs.map(c=>card(c)).join("")}</div>`;
  const planned=WK.some(w=>w.d==isoD(d)&&w.cid&&!offW(w));
