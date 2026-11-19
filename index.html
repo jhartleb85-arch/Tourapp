@@ -109,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=143;
+const APPV=144;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -198,9 +198,22 @@ function prioC(c){const p=plan(c);let v=p.kind=="U"?3:p.dd<-180?2:p.dd<0?1:0;con
 function prio(t){return act().filter(c=>c.t==t).reduce((s,c)=>s+prioC(c),0)}
 function sortOrd(){S.set("ta2_ordman",1);const n=tourCount();ORD=[...Array(n)].map((_,i)=>i+1).sort((a,b)=>prio(b)-prio(a)||a-b);SCHC=null;save();renderAll();renderCal();flash("Touren nach Dringlichkeit sortiert: "+ORD.map(x=>"T"+x).join(" → "))}
 function moveOrd(i,d){S.set("ta2_ordman",1);const o=ordList();const j=i+d;if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];ORD=o;SCHC=null;save();renderAll();renderCal()}
-let SCHC=null;function schedTours(){if(!START)return[];const HAS=new Set(act().map(c=>c.t).filter(Boolean)),hk=[...HAS].sort().join(",");if(SCHC&&SCHC.k==START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD)+hk)return SCHC.v;const OL=ordList();const [y,m,dd]=START.split("-").map(Number);let d=new Date(y,m-1,dd),idx=0;const out=[];
+let SCHC=null;function schedTours(){if(!START)return[];const HAS=new Set(act().map(c=>c.t).filter(Boolean)),hk=[...HAS].sort().join(",")+"|"+act().map(c=>c.id+":"+c.t+":"+c.r+(c.noPhone?1:0)+(c.noCall?1:0)+":"+(LOG[c.id]||[]).filter(e=>e.typ=="B").length).join(",")+"|"+WK.length+(WK.map(w=>w.d+w.cid+(w.tour||"")).join("").length);if(SCHC&&SCHC.k==START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD)+hk)return SCHC.v;const OL=ordList();const [y,m,dd]=START.split("-").map(Number);let d=new Date(y,m-1,dd),idx=0;const out=[];
  for(let i=0;i<160;i++){const br=blockReason(d);if(br){out.push({d,t:0,skip:br})}else{const pos=idx%12;{const tt=pos<tourCount()&&HAS.has(OL[pos])?OL[pos]:0;out.push({d,t:tt,buf:!tt})}idx++}d=addD(d,7)}
- SCHC={k:START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD)+hk,v:out};return out}
+ dynSched(out,HAS);SCHC={k:START+JSON.stringify(BLK)+tourCount()+JSON.stringify(ORD)+hk,v:out};return out}
+// Ab DYNCUT: jede Tourwoche bekommt die Tour, bei der Besuche am dringendsten sind (Jessica 19.11.)
+const DYNCUT="2026-12-09";
+function visInt(c){return(c.noPhone||c.noCall||c.r=="H")?91:Math.round(365/(NEED[c.r]||2))}
+function dynSched(out,HAS){const cut=new Date(DYNCUT+"T00:00"),T=[...HAS].sort((a,b)=>a-b),A=act().filter(c=>c.t);
+ const lv={};A.forEach(c=>{const L=(LOG[c.id]||[]).filter(e=>e.typ=="B").map(e=>e.d);lv[c.id]=L.sort().pop()||""});
+ const fut=WK.filter(w=>w.cid&&!offW(w)&&w.d>=isoToday()).sort((a,b)=>a.d<b.d?-1:1);
+ const lvAt=(c,ds)=>{let v=lv[c.id];fut.forEach(w=>{if(w.cid==c.id&&w.d<ds&&w.d>v)v=w.d});return v};
+ const urg=(c,ds)=>{const l=lvAt(c,ds);const f=l?(new Date(ds+"T00:00")-new Date(l+"T00:00"))/DAY/visInt(c):1.5;return f>=1?Math.min(5,Math.pow(f,1.5)):f>=0.85?0.3:0};
+ const lastT={},td=today();out.forEach(x=>{if(x.t&&x.d<cut){lastT[x.t]=x.d;if(x.d>=td){const ds=isoD(x.d);A.filter(c=>c.t==x.t&&urg(c,ds)>0).forEach(c=>{lv[c.id]=ds})}}});
+ out.forEach(x=>{if(x.skip||x.d<cut)return;const ds=isoD(x.d);
+  const pl=WK.find(w=>w.d==ds&&w.tour&&/Tour\s*(\d+)/.test(w.tour));let best=pl?+pl.tour.match(/Tour\s*(\d+)/)[1]:0,bs=0;
+  if(!best)T.forEach(t=>{if(lastT[t]&&(x.d-lastT[t])/DAY<42)return;const sc=A.filter(c=>c.t==t).reduce((s,c)=>s+urg(c,ds),0);const age=lastT[t]?(x.d-lastT[t])/DAY:999;if(sc>bs+1e-9||(Math.abs(sc-bs)<1e-9&&sc>0&&age>((lastT[best]?(x.d-lastT[best])/DAY:999))))  {best=t;bs=sc}});
+  if(best&&(pl||bs>0)){x.t=best;x.buf=false;x.dyn=1;lastT[best]=x.d;A.filter(c=>c.t==best&&urg(c,ds)>0).forEach(c=>{lv[c.id]=ds})}else{x.t=0;x.buf=true}})}
 function nextTour(t,from){if(!START||!t)return null;const f=from||today();const x=schedTours().find(s=>s.t==t&&s.d>=f);return x?x.d:null}
 function contacts(c){const td=isoToday();return (LOG[c.id]||[]).filter(e=>e.d<=td).slice().sort((a,b)=>a.d<b.d?1:-1)}
 let CALHIDE=S.get("ta2_calhide",[]);const ck=e=>e.d+"|"+(e.v||"")+"|"+e.t;const calEv=()=>{const G=new Set(WK.filter(w=>w.gid).map(w=>w.gid));return(CAL.ev||[]).filter(e=>!CALHIDE.includes(ck(e))&&!(e.gid&&G.has(e.gid)))};
