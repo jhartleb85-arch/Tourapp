@@ -109,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=142;
+const APPV=143;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -1076,7 +1076,8 @@ async function syncNow(mode){if(SYNCING||!S.get("ta2_sync",0)||RO)return;if(mode
   else{const R=(f.appProperties||{}).at||"";
    if(R==Sa){if(dirty){await syncPush(f);msg=mode=="manual"?"☁️ In Google Drive gesichert.":""}else msg=mode=="manual"?"☁️ Alles aktuell.":""}
    else{const j=await syncPull(f);
-    if(Sa&&!dirty){Object.keys(localStorage).filter(k=>k.startsWith("ta2_")&&!LOCALK.includes(k)).forEach(k=>localStorage.removeItem(k));Object.entries(j.ta2||{}).forEach(([k,v])=>{if(!LOCALK.includes(k))localStorage.setItem(k,v)});S.set("ta2_syncat",R);S.set("ta2_synclast",nowISO());S.set("ta2_syncdirty",0);sessionStorage.setItem("ta2_syncmsg","☁️ Neuer Stand vom anderen Gerät übernommen.");SYNCING=0;location.reload();return}
+    const first=!Sa&&confirm("In Google Drive liegt schon ein Stand vom anderen Gerät"+((f.appProperties||{}).dev?" ("+f.appProperties.dev+")":"")+".\n\nOK = diesen Stand übernehmen und die Daten auf DIESEM Gerät ersetzen (empfohlen, wenn dieses Gerät länger nicht benutzt wurde).\nAbbrechen = beide Stände zusammenführen.");
+    if((Sa&&!dirty)||first){Object.keys(localStorage).filter(k=>k.startsWith("ta2_")&&!LOCALK.includes(k)).forEach(k=>localStorage.removeItem(k));Object.entries(j.ta2||{}).forEach(([k,v])=>{if(!LOCALK.includes(k))localStorage.setItem(k,v)});S.set("ta2_syncat",R);S.set("ta2_synclast",nowISO());S.set("ta2_syncdirty",0);sessionStorage.setItem("ta2_syncmsg","☁️ Neuer Stand vom anderen Gerät übernommen.");SYNCING=0;location.reload();return}
     PENDBK=j;mergeBackup();PENDBK=null;await syncPush(await syncFind());msg="☁️ Mit dem anderen Gerät zusammengeführt."}}
   S.set("ta2_syncerr","")}catch(e){S.set("ta2_syncerr",e.message);if(mode!="save")msg="☁️ "+e.message}finally{SYNCING=0}
  if(msg)flash(msg);if(VIEW=="mehr")renderAll()}
