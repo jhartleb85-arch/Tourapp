@@ -109,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=146;
+const APPV=147;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -1154,6 +1154,7 @@ function pasteDlg(){$("#dlgc").innerHTML=`<h2>📋 Daten-Code einfügen</h2><p c
 async function pasteGo(){const v=$("#pc_t").value.trim();if(!v){flash("Feld ist leer.");return}let s;try{s=await unpackCode(v)}catch(x){flash("Code unvollständig – bitte komplett kopieren. ("+h(String(x.message||x).slice(0,40))+")");return}closeDlg();importText(s,"Code")}
 async function importText(t,fname){{let j;try{j=JSON.parse(t.replace(/^\uFEFF/,""))}catch(x){flash("Datei ungültig – ist das die richtige Datei? ("+h(fname)+")");return}
  if(j.enc){const pw=prompt("Passwort der Sicherung:");if(!pw)return;const t0=pw.trim(),up=s=>s.charAt(0).toUpperCase()+s.slice(1),lo=s=>s.charAt(0).toLowerCase()+s.slice(1);const V=[...new Set([pw,t0,t0+" ",up(t0),lo(t0),up(t0)+" ",lo(t0)+" "," "+t0])];let ok=null;for(const v of V){try{ok=await decJSON(j,v);break}catch(x){}}if(!ok){alert("Passwort passt nicht zu dieser Sicherung.\n\nDie Datei selbst ist in Ordnung. Tipp: Groß-/Kleinschreibung prüfen – oder am Handy unter Mehr die Verschlüsselung ausschalten und neu sichern.");return}j=ok}
+ if(j.add&&j.add.ta2){PENDBK=j.add;mergeBackup();PENDBK=null;syncSoon();return}
  if(j.ta2){if(C.length){bkDialog(j);return}PENDBK=j;replaceBackup();return}
  if(j.v&&!j.C){if(j.v<=S.get("ta2_updv",0)){flash("Dieses Update ist schon eingespielt.");return}if(j.home)localStorage.setItem("ta2_home",JSON.stringify(j.home));localStorage.setItem("ta2_pend",JSON.stringify(j));location.reload();return}
  try{C=j.C;LOG=j.LOG||{};tnames=j.tnames||tnames;START=j.START||"";PL=j.PL||PL;FB=j.FB||FB;BLK=j.BLK||BLK;SP=j.SP||SP;WK=j.WK||WK;save();renderAll();flash("Sicherung geladen.")}catch(x){flash("Datei ungültig.")}}}
