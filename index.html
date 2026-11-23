@@ -109,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=147;
+const APPV=148;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -670,10 +670,22 @@ function copyWeek(){const s=weekText();const ta=$("#wkt");ta.value=s;ta.hidden=f
  if(navigator.clipboard)navigator.clipboard.writeText(s).then(ok,()=>{ta.select();flash("Bitte den Text im Feld markieren und kopieren.")});else{ta.select();flash("Bitte den Text im Feld markieren und kopieren.")}}
 function monday(off){const d=today();const k=(d.getDay()+6)%7;return addD(d,-k+7*off)}
 function kw(d){const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=x.getUTCDay()||7;x.setUTCDate(x.getUTCDate()+4-n);const y=new Date(Date.UTC(x.getUTCFullYear(),0,1));return Math.ceil(((x-y)/864e5+1)/7)}
-function wkAdd(ds){const L=dayList(ds);$("#dlgc").innerHTML=`<h2>Termin am ${dmy(ds)}</h2>${L.length?`<div class="card" style="background:var(--softw);margin:0 0 8px;padding:8px 10px"><div class="m" style="font-weight:700">⚠️ An diesem Tag steht schon:</div>${L.map(x=>`<div style="font-size:14px">• ${h(x)}</div>`).join("")}</div>`:""}<label for="w_t">Was?</label><input id="w_t" placeholder="z. B. Nachholbesuch, Amtsgericht …">
- <div class="row"><div><label for="w_v">von</label><input type="time" id="w_v"></div><div><label for="w_b">bis</label><input type="time" id="w_b"></div><div><label for="w_c">Klient (optional)</label><select id="w_c"><option value="">–</option>${act().slice().sort(bySur).map(c=>`<option value="${c.id}">${h(c.n)}</option>`).join("")}</select></div></div>
- <div style="margin-top:10px"><button class="btn" onclick="wkSave('${ds}')">Speichern</button><button class="btn g" onclick="closeDlg()">Abbrechen</button></div>`;$("#dlg").hidden=false}
-function wkSave(ds){const tx=$("#w_t").value.trim(),cid=+$("#w_c").value||0;if(!tx&&!cid){flash("Bitte eintragen, was geplant ist.");return}const c=C.find(x=>x.id==cid);
+let WKM="k";function wkAdd(ds){const L=dayList(ds);const tb=(k,l)=>`<button type="button" class="${WKM==k?"on":""}" onclick="WKM='${k}';wkAdd('${ds}')">${l}</button>`;
+ $("#dlgc").innerHTML=`<h2>Termin am ${dmy(ds)}</h2>${L.length?`<div class="card" style="background:var(--softw);margin:0 0 8px;padding:8px 10px"><div class="m" style="font-weight:700">⚠️ An diesem Tag steht schon:</div>${L.map(x=>`<div style="font-size:14px">• ${h(x)}</div>`).join("")}</div>`:""}
+ <div class="fabt">${tb("k","👤 Klient")}${tb("f","📍 Freie Adresse")}${tb("n","📝 Nur eintragen")}</div>
+ ${WKM=="k"?`<label for="w_c">Klient</label><select id="w_c"><option value="">– bitte wählen –</option>${act().slice().sort(bySur).map(c=>`<option value="${c.id}">${h(c.n)}</option>`).join("")}</select>`:""}
+ ${WKM=="f"?`<label for="w_a">Adresse</label><input id="w_a" placeholder="z. B. Max-Brauer-Allee 89, 22765 Hamburg">`:""}
+ ${WKM!="k"?`<label for="w_t">Was?</label><input id="w_t" placeholder="${WKM=="f"?"z. B. Amtsgericht, Arzttermin …":"z. B. Nachholbesuch, Amtsgericht …"}">`:""}
+ <div class="row"><div><label for="w_v">von</label><input type="time" id="w_v"></div><div><label for="w_b">bis</label><input type="time" id="w_b"></div></div>
+ ${WKM=="n"?"":`<div class="hint" style="margin-top:6px">Die App zeigt danach die Route und wer in der Nähe liegt – mit ➕ dazunehmen, dann „📌 Einplanen“.</div>`}
+ <div style="margin-top:10px">${WKM=="n"?`<button class="btn" onclick="wkSave('${ds}')">Speichern</button>`:`<button class="btn" onclick="wkRoute('${ds}')">▶ Route planen – wer liegt auf dem Weg?</button>`}<button class="btn g" onclick="closeDlg()">Abbrechen</button></div>`;$("#dlg").hidden=false}
+async function wkRoute(ds){const v=$("#w_v").value||"11:00",b=$("#w_b").value;
+ if(WKM=="k"){const cid=+$("#w_c").value||0;if(!cid){flash("Bitte einen Klienten wählen.");return}const c=C.find(x=>x.id==cid);const art=c.e=="E"?"Besuch Einrichtung":"Hausbesuch";
+  if(!WK.some(w=>w.d==ds&&w.cid==cid)){WK.push({id:Date.now(),d:ds,v,b,t:art+" "+c.n.split(" (")[0],cid,art});invTask(WK[WK.length-1]);save()}window.SUGO=true;goPlan(cid,ds,v);return}
+ const a=($("#w_a").value||"").trim();if(!a){flash("Bitte eine Adresse eingeben.");return}const tx=($("#w_t").value||"").trim();closeDlg();
+ here=null;FREEZ=null;PICK=new Set();PB=null;FIRSTA="";REV=0;EXS=[];MODE="weg";$("#zq").value=a;document.querySelector('[data-t="go"]').click();
+ window.SUGO=true;await pickFree();if(!FREEZ)return;if(tx)FREEZ.n="Termin: "+tx;RDATE=ds;RTIME=v;AUTOD=null;window.AUTOT=null;renderGo();flash("Freier Termin gesetzt – unter „Vorschläge“ mit ➕ dazunehmen, dann „📌 Einplanen“.")}
+function wkSave(ds){const tx=(($("#w_t")||{}).value||"").trim(),cid=+(($("#w_c")||{}).value)||0;if(!tx&&!cid){flash("Bitte eintragen, was geplant ist.");return}const c=C.find(x=>x.id==cid);
  WK.push({id:Date.now(),d:ds,v:$("#w_v").value,b:$("#w_b").value,t:tx||("Besuch "+c.n.split(" (")[0]),cid});if(cid)invTask(WK[WK.length-1]);save();closeDlg();renderAll()}
 function okDay2(ds,skip){const L=dayList(ds,skip);return !L.length||confirm(`⚠️ Am ${dmy(ds)} steht schon:\n• ${L.join("\n• ")}\n\nTrotzdem dorthin legen?`)}
 function wkEdit(id){const w=WK.find(x=>x.id==id);if(!w)return;$("#dlgc").innerHTML=`<h2>Termin ändern</h2>
