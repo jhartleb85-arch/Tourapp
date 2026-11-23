@@ -109,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=149;
+const APPV=150;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -674,6 +674,7 @@ function monday(off){const d=today();const k=(d.getDay()+6)%7;return addD(d,-k+7
 function kw(d){const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=x.getUTCDay()||7;x.setUTCDate(x.getUTCDate()+4-n);const y=new Date(Date.UTC(x.getUTCFullYear(),0,1));return Math.ceil(((x-y)/864e5+1)/7)}
 let WKM="k";function wkAdd(ds){const L=dayList(ds);const tb=(k,l)=>`<button type="button" class="${WKM==k?"on":""}" onclick="WKM='${k}';wkAdd('${ds}')">${l}</button>`;
  $("#dlgc").innerHTML=`<h2>Termin am ${dmy(ds)}</h2>${L.length?`<div class="card" style="background:var(--softw);margin:0 0 8px;padding:8px 10px"><div class="m" style="font-weight:700">⚠️ An diesem Tag steht schon:</div>${L.map(x=>`<div style="font-size:14px">• ${h(x)}</div>`).join("")}</div>`:""}
+ ${(()=>{const D=WK.filter(w=>w.d==ds&&w.cid&&!offW(w)&&C.find(c=>c.id==w.cid&&hasP(c))).sort((x,y)=>(x.v||"99")<(y.v||"99")?-1:1);return D.length?`<button class="btn" style="width:100%;margin:0 0 6px" onclick="window.SUGO=true;goPlan(${D[0].cid},'${ds}','${D[0].v||""}')">▶ Route dieses Tages öffnen – wer liegt noch auf dem Weg?</button><div class="hint" style="margin:0 0 10px">Zeigt Ihre ${D.length} Termine als Route und schlägt Klienten in der Nähe vor – mit ➕ dazunehmen, dann „📌 Einplanen“.</div><div class="m" style="font-weight:700;margin-bottom:4px">Oder einen weiteren Termin anlegen:</div>`:""})()}
  <div class="fabt">${tb("k","👤 Klient")}${tb("f","📍 Freie Adresse")}${tb("n","📝 Nur eintragen")}</div>
  ${WKM=="k"?`<label for="w_c">Klient</label><select id="w_c"><option value="">– bitte wählen –</option>${act().slice().sort(bySur).map(c=>`<option value="${c.id}">${h(c.n)}</option>`).join("")}</select>`:""}
  ${WKM=="f"?`<label for="w_a">Adresse</label><input id="w_a" placeholder="z. B. Max-Brauer-Allee 89, 22765 Hamburg">`:""}
