@@ -109,7 +109,7 @@ const RT={H:["immer Hausbesuch",84],A:["2×B + 2×A",182],E:["1×B + 3×A",364],
 const MAXH=5.5;
 const S={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 RW=S.get("ta2_rw","a7");MODE=S.get("ta2_mode","tour");let C=S.get("ta2_clients",null)||SEED.map(c=>({...c}));
-const APPV=150;
+const APPV=151;
 const UPD=(()=>{try{const p=JSON.parse(localStorage.getItem("ta2_pend"));if(p){localStorage.removeItem("ta2_pend");return p}}catch(e){}return {"v":0}})();
 function applyUpd(){const v=S.get("ta2_updv",0);if(UPD.v<=v)return;let n=0;Object.entries(UPD.tn||{}).forEach(([i,g])=>{tnames[+i-1]=g});
  Object.entries(UPD.c||{}).forEach(([name,u])=>C.filter(x=>name[0]=="="?x.n==name.slice(1):x.n.toLowerCase().includes(name.toLowerCase())).forEach(c=>{
@@ -272,6 +272,7 @@ function plan0(c){const L=contacts(c).filter(x=>x.typ!="D"),lc=L[0],nt=nextTour(
  if(nt&&(need>0||c.noPhone)&&(nt<=addD(due,21)||nt<=addD(today(),c.noPhone?42:21))&&(!tel||nt>=addD(due,-35))){const zw=tel&&nt>due&&nt>addD(today(),21)&&dd<=CALLW;return{kind:"B",txt:`Besuch bei Tour ${c.t} am ${fmt(nt)}${dd<0?" (überfällig seit "+(-dd)+" T.)":""}`+(zw?` · 📞 Zwischenanruf bis ${fmt(dd<0?today():due)}`:""),cls:dd<=14||zw?"due":"okk",dd,nt,call:zw}}
  if((c.noPhone||(c.r=="H"&&c.t))&&dd<=14)return{kind:"V",txt:`🚗 Besuch fällig${dd<0?" (seit "+(-dd)+" T.)":" bis "+fmt(due)}`+(c.noPhone?" – nicht telefonisch erreichbar":" – immer Hausbesuch")+``+(c.t?(nt?` · Tour erst ${fmt(nt)}`:""):""),cls:"due",dd,nt};
  if(c.noCall)return{kind:"",txt:"📞 regelmäßiger Telefonkontakt"+(nt&&need>0?` · Besuch mit Tour ${c.t} am ${fmt(nt)}`:""),cls:"okk",dd:999,nt};
+ if((c.noPhone||c.r=="H")&&dd<=CALLW)return{kind:"",txt:`🚗 Besuch nötig bis ${fmt(due)} – ${c.noPhone?"nicht telefonisch erreichbar":"immer Hausbesuch"}`+(c.t&&nt?` · Tour ${c.t} am ${fmt(nt)}`:""),cls:"due",dd,nt};
  if(dd<=CALLW)return{kind:"A",txt:`📞 Anruf fällig${dd<0?" (seit "+(-dd)+" T.)":dd==0?" (heute)":" bis "+fmt(due)}`+(c.t?(nt?` – Tour erst ${fmt(nt)}`:""):need>0?` – oder ☕ ins mobile Büro einladen (noch ${need}× Büro im Jahr)`:" – Büro-Termine für dieses Jahr erfüllt"),cls:"due",dd,nt};
  return{kind:"",txt:`ok · nächster Kontakt bis ${fmt(due)}`+(tel&&nt&&nt<addD(due,-35)?` · Besuch bei Tour ${c.t} am ${fmt(nt)} nicht nötig`:""),cls:"okk",dd,nt}}
 const isDue=c=>plan(c).dd<=14;const CALLW=28;
